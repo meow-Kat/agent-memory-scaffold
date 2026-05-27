@@ -81,7 +81,7 @@ Filenames English; paths under repo's docs/ (never scratch). If the tool's built
 
 ## Memory (full spec in docs/memory.md)
 - Read the stable tier as background before any task; write tasks.md/progress.md per task.
-- docs/ files: English filenames, 繁中 content, written to repo's docs/ (never scratch).
+- docs/ files: English filenames, written to repo's docs/ (never scratch).
 
 ## Autoload (needs tool import support; else inline these summaries here)
 @docs/glossary.md
@@ -94,7 +94,7 @@ Filenames English; paths under repo's docs/ (never scratch). If the tool's built
 ## TEMPLATE C — stable-tier file header (start of each)
 ```markdown
 # (architecture / flow / glossary — pick one)
-> Stable tier, read-only background. Update only on real structural/flow change or new term. Content in 繁體中文.
+> Stable tier, read-only background. Update only on real structural/flow change or new term.
 
 <fill in project content>
 ```
