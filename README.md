@@ -26,11 +26,11 @@ npx skills add meow-Kat/agent-memory-scaffold -g
 
 The skill decides which mode to run during its Detect step — you don't pick.
 
-**Scaffold** (structure is missing) — creates only the missing pieces from templates, reports which `<fill-in>` spots you need to complete, and flags which mechanisms (autoload / hooks) depend on your specific tool and need confirming. Existing files are never touched.
+**Scaffold** (pieces are missing) — creates only the missing items from templates, reports which `<fill-in>` spots you need to complete, and flags which mechanisms (autoload / hooks) depend on your specific tool and need confirming. Existing files are never touched.
 
-**Audit** (structure already exists) — a read-only review that changes nothing. It grades each item **Has / Partial / Missing** per layer, gives a one-line fix for each, and surfaces the **top-3 highest-ROI gaps**. The audit checks things like: does the main rules file actually carry the work loop and point to the real `docs/` filenames; is `progress.md` genuinely updated on commit; are commit/write restrictions enforced by a real guard rather than just prose; is the main rules file lean enough; and are sub-agents really using `docs/` as shared memory or flying blind.
+**Audit** (structure already exists) — a read-only review that changes nothing. Grading against the target structure, it marks each item **Has / Partial / Missing** per layer, gives a one-line fix for each, and surfaces the **top-3 highest-ROI gaps**. Among the things it checks: does the main rules file actually carry the work loop and point to the real English `docs/` filenames; is `progress.md` genuinely updated on commit; are commit/write restrictions enforced by a real hook rather than just prose; is the main rules file lean (~80–120 lines); are sub-agents really using `docs/` as shared memory or flying blind; and is there any project-level rule that just duplicates a global one.
 
-In both modes it **stops** afterward and waits for you — it does not roll on into a dev task.
+In both modes it **stops** afterward and waits for you — it never rolls on into a dev task.
 
 ## Precheck
 
@@ -46,21 +46,20 @@ docs/
 ├── architecture.md  # stable: structure
 ├── flow.md          # stable: flows / cross-module deps
 ├── glossary.md      # stable: domain terms
-├── decisions.md     # history: ADRs
-└── memory.md        # full spec of the memory mechanism — also the yardstick Audit grades against
+└── decisions.md     # history: ADRs
 ```
 
-Plus a section in your main rules file (`CLAUDE.md` / `AGENTS.md`) defining roles, the two-phase work loop, a memory summary, and the autoload hookup.
+Plus a section in your main rules file (`CLAUDE.md` / `AGENTS.md`) carrying the roles, the two-phase work loop, the memory-tier rules, and the autoload hookup. That main-rules snippet is the **single source of truth** for how memory works — tier behavior, autoload, and read/write timing all live there rather than in a separate spec file.
 
 Memory is organized in tiers:
 
-- **Stable** (read-only background) — architecture, flow, glossary. Read before any task; updated only on a real structural change.
+- **Stable** (read-only background) — architecture, flow, glossary. Read before any task; updated only on a real structural/flow change or a new term.
 - **Hot** (per-task) — tasks and progress.
-- **History** (on demand) — decisions / ADRs.
+- **History** (on demand) — decisions / ADRs, plus proposals under `plans/`.
 
 ## The work loop
 
-The templates wire up a two-phase loop so planning and execution stay separated:
+The template wires up a two-phase loop so planning and execution stay separated:
 
 1. **Propose** — a new requirement becomes a draft in `docs/plans/`, then stops for discussion.
 2. **Gate** — it needs your approval; rejected proposals are marked as such.
@@ -72,7 +71,7 @@ The templates wire up a two-phase loop so planning and execution stay separated:
 Discipline that matters is enforced by your tool's hook mechanism, not by hoping the agent behaves:
 
 - The **coder can't commit** — a `PreToolUse(Bash)` hook blocks `git commit` / `git push`; the orchestrator commits after green.
-- **Tester and verifier are read-only** — Edit/Write removed, plus a hook blocking mutating commands.
+- **Tester and verifier are read-only** — Edit/Write removed, plus a hook blocking mutating commands (commits, `rm`, file redirects, package installs).
 - On Claude Code these live in the sub-agent's frontmatter `hooks:`, scoped to that agent only.
 
 Where a guard genuinely can't be enforced — e.g. "the main agent never writes source," since the orchestrator holds all tools — the skill says so honestly rather than pretending. If your tool has no hook support, restrictions are flagged as advisory only.
@@ -81,8 +80,8 @@ Where a guard genuinely can't be enforced — e.g. "the main agent never writes 
 
 - **Tool-neutral.** Concepts like *main rules file*, *import*, *hook*, and *sub-agent* are mapped onto your agent's actual mechanisms; if something isn't supported, the closest substitute is used and called out.
 - **Never overwrites.** Only missing pieces are added; Audit mode writes nothing at all.
-- **English filenames.** File content stays in the project's working language.
-- **Repo-relative.** All memory files go to the current repo's `docs/`, never a session scratch directory.
+- **English filenames, working-language content.** File content is written in the project's working language (e.g. 繁體中文); the skill's own template/spec text may stay English.
+- **Repo-relative.** All output goes to the current repo's `docs/`, never a session scratch directory. If you're not in a repo, the skill asks where to write.
 
 ## Compatibility
 
