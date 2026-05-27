@@ -63,7 +63,7 @@ Memory is organized in tiers:
 
 - **Tool-neutral.** Concepts like *main rules file*, *import*, *hook*, and *sub-agent* are mapped onto your agent's actual mechanisms. If something isn't supported, the closest substitute is used and called out.
 - **Never overwrites.** Only missing pieces are added to an existing project.
-- **Output language.** Filenames stay English; project content (plans, tasks, progress, architecture / flow / glossary) is written in 繁體中文. Structural spec text may stay English.
+- **Output language.** Filenames stay English.
 - **Repo-relative.** All memory files go to the current repo's `docs/`, never a session scratch directory.
 
 ## Compatibility
