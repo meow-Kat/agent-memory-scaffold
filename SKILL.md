@@ -20,7 +20,7 @@ On entering a project, if ANY of these are true:
 4. Don't start work: after scaffolding, STOP and wait for the user — do not proceed into any dev task.
 
 ## Conventions (apply to all output)
-- Filenames English; project content (plans, tasks, progress, architecture/flow/glossary entries) in 繁體中文, regardless of the language you reason or chat in. Structural spec text may stay English.
+- Filenames English; Structural spec text may stay English.
 - Write all memory files to the current repo's docs/ (repo-relative), NEVER the session/conversation scratch dir.
 - docs/ does NOT autoload by default; it only takes effect via the main rules file's import or an inlined summary.
 - Stable tier = read-only background, written only when structure/flow truly changes; tasks/progress = per-task writes; decisions = written only when needed.
@@ -63,7 +63,7 @@ Happens via the work loop, not automatically: requirement → plan draft (STOP, 
 Sub-agents are stateless; docs/ is the only shared handoff channel — anything downstream needs must be written to docs/.
 
 ## Hard rules
-Filenames English; project content 繁中; paths under repo's docs/ (never scratch). If the tool's built-in behavior violates this, fix via hook or setting.
+Filenames English; paths under repo's docs/ (never scratch). If the tool's built-in behavior violates this, fix via hook or setting.
 ```
 
 ## TEMPLATE B — main rules file snippet (paste into CLAUDE.md / AGENTS.md)
