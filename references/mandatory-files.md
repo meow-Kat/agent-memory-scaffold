@@ -1,0 +1,154 @@
+# Mandatory file specs
+
+Per-file specs and templates for the five mandatory files agent-memory-scaffold creates during SCAFFOLD. Read the relevant section before creating the corresponding file.
+
+## architecture.md — mandatory
+
+Always create `docs/architecture.md` during scaffold. It is the env fingerprint coder / tester / verifier need before they can run.
+
+### Detect (deterministic — call the bundled script)
+```bash
+python3 ~/.claude/skills/agent-memory-scaffold/detect-env.py [<repo-root>]
+```
+Reads `pyproject.toml` / `requirements.txt` / `setup.py` / `environment.yml` / `package.json` (+ lockfile) / `go.mod` / `Cargo.toml` / `Gemfile`, plus version pins (`.python-version`, `.nvmrc`, `.tool-versions`, `.ruby-version`) and env vars (`$CONDA_DEFAULT_ENV`, `$VIRTUAL_ENV`). Emits JSON:
+```json
+{ "root": "...", "languages": [{"name", "version", "package_manager", "test_framework", "lint_format"}], "env_manager": "...", "asks": [...] }
+```
+This script is the ONLY source of truth for detection — do not re-parse manifests in the LLM, it drifts session to session.
+
+### Then ask once for what the script couldn't detect
+Use the `asks[]` array from the JSON verbatim as the consolidated question set. No blanks. No guesses.
+
+### Structure section
+- Plan exists (`docs/plans/*.md` listing affected files / modules) → infer from it.
+- Greenfield (no plan) → write `TBD — filled by Phase 2 (execute) after the first task`.
+
+### Template (paste verbatim)
+```markdown
+# Architecture
+> Stable tier, read-only background. Update only on real structural change.
+
+## Environment
+- Language / version:
+- Env manager (conda / venv / pyenv / nvm / system):
+- Package manager:
+- Test framework (or "none"):
+- Lint / Format (or "none"):
+- Run / start command:
+- Build / CI command (or "none"):
+
+## Structure
+
+
+## External dependencies
+- Services / APIs:
+- Required env vars:
+- Other:
+```
+
+## Project rules file (CLAUDE.md / AGENTS.md) — mandatory
+
+Create the main rules file during scaffold — `CLAUDE.md` for Claude Code, `AGENTS.md` for Codex, both (region-marker shared) for cross-tool. Sub-agents read this before acting; without it they fly blind.
+
+### Mode
+- Global rules file exists with the work loop → **Lean**: only autoload + project overrides; assume global supplies work loop / roles / tiers.
+- Otherwise → **Portable**: embed the content of `references/template-b.md` in full.
+
+### Wrap in `agents-md-sync` region markers
+`<!-- harness:shared:start -->` … `<!-- harness:shared:end -->` for tool-neutral content; empty `harness:claude:*` and `harness:codex:*` regions below. Keeps `/agents-md-sync` idempotent from day one.
+
+### Lean template (paste verbatim — drop the title; the directory is the identity)
+```markdown
+<!-- harness:shared:start -->
+## Autoload
+@docs/architecture.md
+<!-- optional: @docs/glossary.md if jargon exists -->
+
+## Refer to
+- Work loop, roles, memory tiers, guards: see global CLAUDE.md / AGENTS.md.
+- Project-specific overrides go below — keep this file lean (~80 lines).
+<!-- harness:shared:end -->
+
+<!-- harness:claude:start -->
+<!-- Claude Code-specific notes; delete if unused -->
+<!-- harness:claude:end -->
+
+<!-- harness:codex:start -->
+<!-- Codex-specific notes; delete if unused -->
+<!-- harness:codex:end -->
+```
+
+### Portable template
+Wrap the content of `references/template-b.md` inside `<!-- harness:shared:start -->` / `<!-- harness:shared:end -->`. Add empty `harness:claude:*` and `harness:codex:*` regions below.
+
+### Existing-file handling (never overwrite)
+- Has region markers + shared region empty → write content into shared region.
+- Has region markers + shared region non-empty → AUDIT-report only; do not modify.
+- No region markers → propose `/agents-md-sync` first; do NOT auto-add markers without consent.
+
+## decisions.md — mandatory (stub)
+
+History tier — stub mandatory even with zero entries; there's no "no history" state. Phase 2 (execute) prepends ADR entries as they arise.
+
+### Template (paste verbatim)
+```markdown
+# Decisions
+> Append-only log. Newest entry first. One entry per major trade-off (architecture, framework, protocol, library, …).
+> Status flow: proposed → accepted → (later) superseded by ADR-NNNN | deprecated.
+
+<!-- ADR template — copy, fill, prepend:
+
+## ADR-NNNN: <title>
+**Date**: <YYYY-MM-DD>
+**Status**: proposed | accepted
+
+### Context
+### Decision
+### Consequences
+### Alternatives considered
+-->
+
+## Entries
+<!-- newest first -->
+```
+
+## flow.md — mandatory (stub)
+
+Stable tier — stub mandatory even with no flows yet. Skipping at scaffold leaves it permanently missing; the threshold to "go back and create later" never gets crossed. Greenfield → use the template with `TBD — filled by Phase 2 as flows materialize` under "Main flows"; leave "Cross-module dependencies" empty.
+
+### Template (paste verbatim)
+```markdown
+# Flow
+> Stable tier, read-only background. Update only on real flow / cross-module change.
+
+## Main flows
+<one entry per top-level user-visible behavior; trigger → steps → outcome>
+
+### <flow name>
+- Trigger:
+- Steps:
+  1.
+  2.
+- Outcome:
+
+## Cross-module dependencies
+<one-directional arrows; flag any cycles>
+
+- `<module A>` → `<module B>` (purpose)
+```
+
+## glossary.md — mandatory (stub)
+
+Stable tier — stub mandatory even with zero terms. Skipping at scaffold leaves it permanently missing; the threshold to "go back and create later" never gets crossed. Greenfield → use the template with `TBD — filled as domain terms appear in code or docs` under "## Terms".
+
+### Template (paste verbatim)
+```markdown
+# Glossary
+> Stable tier, read-only background. Add a term only when it appears in code or docs.
+
+## Terms
+
+### <Term>
+<one-sentence definition in project context>
+<optional: acronym expansion / external reference>
+```
