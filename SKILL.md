@@ -32,6 +32,7 @@ The work loop dispatches coder/tester/verifier. Confirm they exist as dispatchab
      e. **docs/ used as shared memory**, or sub-agents flying blind?
      f. **No redundant overrides**: project-level role/rule duplicating global (delete unless LOGIC, not just data, differs)
      g. **`detect-env.py` reachable** from the skill folder (if architecture.md was scaffolded by this skill)
+     h. **Work-loop steering survives compaction**: a UserPromptSubmit-equivalent hook re-injects a one-line reminder every prompt to route code work through the two-phase loop + coder/tester/verifier — present, or the loop is silently forgotten in long sessions. Verify the hook exists; do NOT create it here (it lives in the tool's hook config, not docs/).
 3. Report:
    - SCAFFOLD → what you created + which `<fill-in>` spots the user must complete + which mechanisms (autoload / hook) depend on the tool and need confirming.
    - AUDIT → Has/Partial/Missing table (with layer tag) + a one-line fix each + the top-3 highest-ROI gaps.
