@@ -19,6 +19,9 @@ This script is the ONLY source of truth for detection — do not re-parse manife
 ### Then ask once for what the script couldn't detect
 Use the `asks[]` array from the JSON verbatim as the consolidated question set. No blanks. No guesses.
 
+### Test framework field — must be a runnable command
+Record the **exact command a read-only tester can paste and run**, including the container wrapper if the host runtime can't run it natively (e.g. `docker run --rm … vendor/bin/phpunit`). A bare framework name ("phpunit", "pytest") is insufficient — the tester will improvise and drift, and a containerized run may trip an over-broad write-guard. If host ≠ runtime, capture the wrapper here so the loop stays runnable.
+
 ### Structure section
 - Plan exists (`docs/plans/*.md` listing affected files / modules) → infer from it.
 - Greenfield (no plan) → write `TBD — filled by Phase 2 (execute) after the first task`.
@@ -32,7 +35,7 @@ Use the `asks[]` array from the JSON verbatim as the consolidated question set. 
 - Language / version:
 - Env manager (conda / venv / pyenv / nvm / system):
 - Package manager:
-- Test framework (or "none"):
+- Test framework (or "none"):    # full runnable command incl. container wrapper, not just the framework name
 - Lint / Format (or "none"):
 - Run / start command:
 - Build / CI command (or "none"):
