@@ -18,7 +18,7 @@ The work loop dispatches coder/tester/verifier. Confirm they exist as dispatchab
 ## Steps
 1. Detect: for each item in "Target structure" (docs/ layers + the main rules file carrying the work loop & memory mechanism) → mark Has / Partial / Missing (tag layer: project / docs).
 2. Branch:
-   - Mostly Missing → SCAFFOLD: create only the missing items from the templates. NEVER overwrite an existing file. **All five mandatories must be created — no skip**: `docs/architecture.md`, `docs/decisions.md`, `docs/flow.md`, `docs/glossary.md`, AND the project rules file (`CLAUDE.md` / `AGENTS.md`). Skipping at scaffold is path-dependent — once skipped, the threshold to "go back and create later" is always too high, so the file stays missing forever. Greenfield → create with template + TBD placeholder; Phase 2 (execute) fills as content materializes. **See `references/mandatory-files.md` for per-file spec + template.**
+   - Mostly Missing → SCAFFOLD: create only the missing items from the templates. NEVER overwrite an existing file. **All six mandatories must be created — no skip**: `docs/architecture.md`, `docs/conventions.md`, `docs/decisions.md`, `docs/flow.md`, `docs/glossary.md`, AND the project rules file (`CLAUDE.md` / `AGENTS.md`). The rules file MUST instruct the agent to read docs/ (autoload + "read docs/ before any task") — scaffolding the docs without wiring the rules file to consult them leaves them unread. Skipping at scaffold is path-dependent — once skipped, the threshold to "go back and create later" is always too high, so the file stays missing forever. Greenfield → create with template + TBD placeholder; Phase 2 (execute) fills as content materializes. **See `references/mandatory-files.md` for per-file spec + template.**
    - Exists / maintained → AUDIT (read-only, make NO changes), grading against "Target structure":
      a. **Mandatory files present & properly populated**:
         - project rules file (CLAUDE.md / AGENTS.md): exists, has `agents-md-sync` region markers + work loop (linked or embedded)
@@ -26,13 +26,17 @@ The work loop dispatches coder/tester/verifier. Confirm they exist as dispatchab
         - `docs/decisions.md`: stub present (header + ADR template comment)
         - `docs/flow.md`: stub present (Main flows + Cross-module dependencies headers); Main flows not stuck at TBD if flows have materialized
         - `docs/glossary.md`: stub present (Terms header); Terms not stuck at TBD if domain terms have entered code or docs
+        - `docs/conventions.md`: stub present (Rules header) + autoloaded in the rules file; Rules not stuck at TBD if recurring rules/gotchas have emerged (promoted from decisions.md or user feedback)
+        - rules file wires docs/ in: autoloads architecture/conventions (+glossary) AND tells the agent to read docs/ before any task (hot tier on session start)
      b. **Hot tier maintained**: tasks.md / progress.md actively updated; progress.md is outcome summary, NOT duplicate of tasks.md checkmarks
-     c. **Guards real**: commit / source-write restrictions hook-enforced, not prose
+     c. **Guards real AND correct**: commit / source-write restrictions hook-enforced, not prose — and the guard must not over-block. Smoke-test it: it must (i) block real writes, but (ii) NOT block the canonical read-only test/lint/build command (incl. its container wrapper, e.g. `docker run --rm …`). An over-broad guard silently pushes verification onto the writer and collapses the coder/tester split. Verify by running the command, not by reading the hook.
      d. **Main rules file lean** (~80–120 lines); over → flag what to split into docs/
      e. **docs/ used as shared memory**, or sub-agents flying blind?
      f. **No redundant overrides**: project-level role/rule duplicating global (delete unless LOGIC, not just data, differs)
      g. **`detect-env.py` reachable** from the skill folder (if architecture.md was scaffolded by this skill)
      h. **Work-loop steering survives compaction**: a UserPromptSubmit-equivalent hook re-injects a one-line reminder every prompt to route code work through the two-phase loop + coder/tester/verifier — present, or the loop is silently forgotten in long sessions. Verify the hook exists; do NOT create it here (it lives in the tool's hook config, not docs/).
+     i. **Roles operable, not just present**: dispatch the tester to actually run the project's documented test/lint command (per architecture.md, incl. container wrapper). If it is blocked by a guard or the tester has to improvise the command, the loop is broken — this is a top-ROI gap, not cosmetic. (Presence of the agent ≠ ability to do its job; see item c.)
+     j. **Hot tier ↔ working tree consistency**: cross-check tasks.md / progress.md against `git status` + `git diff`. No checkbox or progress claim may contradict the actual tree — a task marked done must be reflected in the diff or already committed; progress must not state work as not-done when the tree shows it done (or vice-versa). Drift here makes sub-agents redo or conflict with in-flight work.
 3. Report:
    - SCAFFOLD → what you created + which `<fill-in>` spots the user must complete + which mechanisms (autoload / hook) depend on the tool and need confirming.
    - AUDIT → Has/Partial/Missing table (with layer tag) + a one-line fix each + the top-3 highest-ROI gaps.
@@ -41,7 +45,7 @@ The work loop dispatches coder/tester/verifier. Confirm they exist as dispatchab
 ## Conventions
 - Filenames English. Content language:
   - **繁體中文 (working language) — `docs/plans/*.md` body ONLY**. Plans are human-review documents.
-  - **English (concise) — everything else**: project rules file (CLAUDE.md / AGENTS.md), stable-tier docs (`architecture.md`, `flow.md`, `glossary.md`), `decisions.md` (structure AND ADR entry text), `tasks.md`, `progress.md`. Sub-agents read these on every task — ambiguous prose or mixed language costs comprehension.
+  - **English (concise) — everything else**: project rules file (CLAUDE.md / AGENTS.md), stable-tier docs (`architecture.md`, `conventions.md`, `flow.md`, `glossary.md`), `decisions.md` (structure AND ADR entry text), `tasks.md`, `progress.md`. Sub-agents read these on every task — ambiguous prose or mixed language costs comprehension.
 - Write all output to the current repo's docs/ (repo-relative), NEVER a session/scratch dir. Not a repo → ask the user where.
 - All tier / autoload / read-write mechanics live in `references/template-b.md` — the single source. Don't restate them elsewhere.
 
@@ -52,6 +56,7 @@ docs/
 ├── tasks.md         # approved execution list (rolling)
 ├── progress.md      # done log + cross-session handoff
 ├── architecture.md  # stable: env fingerprint + structure (mandatory)
+├── conventions.md   # stable: forward-binding rules / gotchas, autoloaded (mandatory stub)
 ├── flow.md          # stable: flows / cross-module deps (mandatory stub)
 ├── glossary.md      # stable: domain terms (mandatory stub)
 └── decisions.md     # history: ADR log (mandatory stub)
@@ -60,11 +65,12 @@ Main rules file (CLAUDE.md / AGENTS.md) must contain: roles, two-phase work loop
 
 ## Mandatory files (read spec before scaffolding)
 
-All five mandatories must be scaffolded — never skipped (path-dependent: skipped → permanently missing). Per-file specs + templates live in `references/mandatory-files.md`; read the relevant section before creating the file.
+All six mandatories must be scaffolded — never skipped (path-dependent: skipped → permanently missing). Per-file specs + templates live in `references/mandatory-files.md`; read the relevant section before creating the file.
 
 | File | Purpose | Reference |
 |---|---|---|
 | `docs/architecture.md` | env fingerprint (calls `detect-env.py`) | `references/mandatory-files.md` |
+| `docs/conventions.md` | forward-binding rules / gotchas (autoloaded) | `references/mandatory-files.md` |
 | `docs/decisions.md` | ADR log stub | `references/mandatory-files.md` |
 | `docs/flow.md` | flows + cross-module dependencies | `references/mandatory-files.md` |
 | `docs/glossary.md` | domain terms | `references/mandatory-files.md` |

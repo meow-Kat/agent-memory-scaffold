@@ -1,6 +1,6 @@
 # Mandatory file specs
 
-Per-file specs and templates for the five mandatory files agent-memory-scaffold creates during SCAFFOLD. Read the relevant section before creating the corresponding file.
+Per-file specs and templates for the six mandatory files agent-memory-scaffold creates during SCAFFOLD. Read the relevant section before creating the corresponding file.
 
 ## architecture.md — mandatory
 
@@ -65,10 +65,12 @@ Create the main rules file during scaffold — `CLAUDE.md` for Claude Code, `AGE
 <!-- harness:shared:start -->
 ## Autoload
 @docs/architecture.md
+@docs/conventions.md
 <!-- optional: @docs/glossary.md if jargon exists -->
 
 ## Refer to
 - Work loop, roles, memory tiers, guards: see global CLAUDE.md / AGENTS.md.
+- **Before any task, READ docs/ memory** — stable tier (architecture / conventions / flow / glossary) + hot tier (tasks.md / progress.md on session start) + check plans/ for in-flight work. docs/ is the only shared handoff channel; sub-agents fly blind without it.
 - Project-specific overrides go below — keep this file lean (~80 lines).
 <!-- harness:shared:end -->
 
@@ -154,4 +156,28 @@ Stable tier — stub mandatory even with zero terms. Skipping at scaffold leaves
 ### <Term>
 <one-sentence definition in project context>
 <optional: acronym expansion / external reference>
+```
+
+## conventions.md — mandatory (stub)
+
+Stable tier, **autoloaded** — distilled, forward-binding rules / gotchas / exception-cases the AI must follow on every task. Distinct from `decisions.md` (one-off decisions + full context, backward-looking): a convention is the rule **promoted from a recurring or generalizable decision**, deduplicated and rewritten as the code evolves. Not every ADR becomes a convention — only the ones that should steer FUTURE work; one-offs stay in `decisions.md`. Stub mandatory even with zero rules (path-dependent: skipped → permanently missing). Autoloaded, so keep it scannable — promote only rules with real recurrence.
+
+Each entry: an imperative do/don't + a one-line why (+ optional `→ ADR-NNNN` link to the decision that established it).
+
+### Template (paste verbatim)
+```markdown
+# Conventions
+> Stable tier, autoloaded. Forward-binding rules / gotchas the AI must follow on every task.
+> Each rule: imperative do/don't + one-line why (+ optional → ADR-NNNN).
+> Promote here only recurring / generalizable lessons; one-offs stay in decisions.md.
+
+## Rules
+TBD — filled as recurring rules emerge (promoted from decisions.md or user feedback)
+
+<!-- example shape:
+### Security — XSS / DOM-XSS
+Fix at the source (server-side escape / server-render), NOT client-side sanitizers or
+JS DOM-building. Snyk taint analysis flags `.html()`/`.append()`/`innerHTML` as sinks
+regardless of `.text()` safety, so dynamic fixes only relocate the finding. → ADR-NNNN
+-->
 ```

@@ -26,11 +26,11 @@ npx skills add meow-Kat/agent-memory-scaffold -g
 
 The skill decides which mode to run during its Detect step — you don't pick.
 
-**Scaffold** (pieces are missing) — creates only the missing items from templates, reports which fields you must fill, and flags which mechanisms (autoload / hooks) depend on your specific tool and need confirming. Existing files are never touched. All five mandatory files (`architecture.md`, `decisions.md`, `flow.md`, `glossary.md`, and the project rules file) are always created — no conditional skip, because skipping at scaffold is path-dependent and the file stays missing forever.
+**Scaffold** (pieces are missing) — creates only the missing items from templates, reports which fields you must fill, and flags which mechanisms (autoload / hooks) depend on your specific tool and need confirming. Existing files are never touched. All six mandatory files (`architecture.md`, `conventions.md`, `decisions.md`, `flow.md`, `glossary.md`, and the project rules file) are always created — no conditional skip, because skipping at scaffold is path-dependent and the file stays missing forever. The rules file is wired to read docs/ (autoload + a "read docs/ before any task" instruction) so the scaffolded memory actually gets consulted.
 
 **Audit** (structure already exists) — a read-only review that changes nothing. Grading against the target structure, it marks each item **Has / Partial / Missing** per layer, gives a one-line fix for each, and surfaces the **top-3 highest-ROI gaps**. Checks include:
 
-- Are the five mandatory files present and properly populated? (architecture.md Environment section filled with real values; decisions.md stub; flow.md stub; glossary.md stub; project rules file with `agents-md-sync` region markers + work loop linked or embedded)
+- Are the six mandatory files present and properly populated? (architecture.md Environment section filled with real values; conventions.md stub + autoloaded; decisions.md stub; flow.md stub; glossary.md stub; project rules file with `agents-md-sync` region markers + work loop linked or embedded + docs/ autoloaded/read-instructed)
 - Is the hot tier maintained? (tasks.md / progress.md actively updated; progress.md is an outcome summary, not a duplicate of tasks.md checkmarks)
 - Are commit / source-write restrictions enforced by a real hook rather than prose?
 - Is the main rules file lean (~80–120 lines)?
@@ -52,6 +52,7 @@ docs/
 ├── tasks.md         # approved execution list (rolling)
 ├── progress.md      # done log + cross-session handoff
 ├── architecture.md  # stable: env fingerprint + structure (mandatory)
+├── conventions.md   # stable: forward-binding rules / gotchas, autoloaded (mandatory stub)
 ├── flow.md          # stable: flows / cross-module deps (mandatory stub)
 ├── glossary.md      # stable: domain terms (mandatory stub)
 └── decisions.md     # history: ADR log (mandatory stub)
@@ -68,7 +69,7 @@ For `architecture.md` specifically, a bundled **`detect-env.py`** reads your pro
 
 Memory is organized in tiers:
 
-- **Stable** (read-only background) — architecture, flow, glossary. Read before any task; updated only on a real structural/flow change or a new term.
+- **Stable** (read-only background) — architecture, conventions, flow, glossary. Read before any task; updated only on a real structural/flow change, a new term, or a new recurring rule. `conventions.md` holds forward-binding rules / gotchas promoted from `decisions.md` or user feedback (one-offs stay in decisions).
 - **Hot** (per-task) — tasks and progress. Read on session start to resume in-flight work; they don't autoload.
 - **History** — decisions / ADRs (stub mandatory; entries appended on demand) plus proposals under `plans/`.
 
@@ -98,7 +99,7 @@ agent-memory-scaffold/
 ├── SKILL.md                    # core: precheck, steps, audit criteria, conventions, mandatory-file pointers
 ├── detect-env.py               # bundled deterministic env-fingerprint script
 ├── references/
-│   ├── mandatory-files.md      # per-file specs + templates for the five mandatories
+│   ├── mandatory-files.md      # per-file specs + templates for the six mandatories
 │   └── template-b.md           # work-loop snippet to embed in Portable mode
 ├── README.md
 └── LICENSE
@@ -110,7 +111,7 @@ The agent loads `SKILL.md` on invocation and reads `references/*` on demand when
 
 - **Tool-neutral.** Concepts like *main rules file*, *import*, *hook*, and *sub-agent* are mapped onto your agent's actual mechanisms; if something isn't supported, the closest substitute is used and called out.
 - **Never overwrites.** Only missing pieces are added; Audit mode writes nothing at all.
-- **English filenames; English content by default, working language only for plan drafts.** All scaffolded files (project rules file, architecture.md, flow.md, glossary.md, decisions.md, tasks.md, progress.md) are concise English so sub-agents can parse them. The single exception is `docs/plans/*.md` body, which is written in the project's working language (e.g. 繁體中文) for human review.
+- **English filenames; English content by default, working language only for plan drafts.** All scaffolded files (project rules file, architecture.md, conventions.md, flow.md, glossary.md, decisions.md, tasks.md, progress.md) are concise English so sub-agents can parse them. The single exception is `docs/plans/*.md` body, which is written in the project's working language (e.g. 繁體中文) for human review.
 - **Repo-relative.** All output goes to the current repo's `docs/`, never a session scratch directory. If you're not in a repo, the skill asks where to write.
 
 ## Compatibility
