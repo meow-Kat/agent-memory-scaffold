@@ -7,8 +7,9 @@ Per-file specs and templates for the six mandatory files agent-memory-scaffold c
 Always create `docs/architecture.md` during scaffold. It is the env fingerprint coder / tester / verifier need before they can run.
 
 ### Detect (deterministic — call the bundled script)
+`detect-env.py` ships in this skill's own folder — resolve the path from wherever the skill is installed, don't hardcode a tool-specific prefix (Claude Code: `~/.claude/skills/agent-memory-scaffold/`; Codex: `~/.codex/skills/agent-memory-scaffold/`; project-scoped installs live under `.claude/skills/` or `.codex/skills/`).
 ```bash
-python3 ~/.claude/skills/agent-memory-scaffold/detect-env.py [<repo-root>]
+python3 <skill-dir>/detect-env.py [<repo-root>]
 ```
 Reads `pyproject.toml` / `requirements.txt` / `setup.py` / `environment.yml` / `package.json` (+ lockfile) / `go.mod` / `Cargo.toml` / `Gemfile`, plus version pins (`.python-version`, `.nvmrc`, `.tool-versions`, `.ruby-version`) and env vars (`$CONDA_DEFAULT_ENV`, `$VIRTUAL_ENV`). Emits JSON:
 ```json

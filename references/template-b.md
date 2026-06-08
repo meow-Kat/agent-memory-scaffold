@@ -31,6 +31,7 @@ Paste this into the project's CLAUDE.md / AGENTS.md when using **Portable mode**
 - coder must not commit: a PreToolUse(Bash) hook blocks `git commit` / `git push` (the orchestrator commits after green).
 - tester/verifier read-only: remove Edit/Write + a PreToolUse(Bash) hook blocks mutating commands (git commit|add|push, rm, file redirects, package installs).
 - Claude Code: put these in the sub-agent's frontmatter `hooks:` (scoped to that agent only).
+- Codex: enforce tester/verifier read-only via the agent's own `.codex/agents/<name>.toml` field `sandbox_mode = "read-only"` (cleaner than a hook — no guard needed). For coder no-commit, use a global `[hooks]` PreToolUse **command** hook in `config.toml` / `hooks.json` matching `git commit|push`. GOTCHA: Codex runs **command** hooks only — `prompt` and `agent` hook handlers are parsed but silently skipped, so a guard written as a prompt hook does nothing. Codex hooks are global + matcher-scoped, not per-agent like Claude's frontmatter.
 - No hook support → state explicitly that the restriction is advisory only.
 - NOTE: "main agent never writes source" stays a prose discipline — the orchestrator holds all tools, so it can't be cleanly hook-enforced.
 ```
