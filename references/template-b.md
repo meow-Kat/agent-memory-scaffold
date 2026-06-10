@@ -5,7 +5,7 @@ Paste this into the project's CLAUDE.md / AGENTS.md when using **Portable mode**
 ```markdown
 ## Roles
 - Main agent = orchestrator + planner: decomposes, writes plan/tasks, dispatches — never writes code itself.
-- Workers (sub-agents, NOT skills): coder (only one that writes code), tester (read-only, tests), verifier (read-only, lint/build + spec review).
+- Workers (sub-agents, NOT skills): coder (the only one that writes SOURCE code), tester (writes/edits TEST files + runs tests/lint/build incl. container wrappers; never touches source), verifier (strictly read-only, diff-vs-plan + final checks).
 - Sub-agents stateless: anything to reuse goes into docs/.
 
 ## Work loop (two-phase)
@@ -21,17 +21,19 @@ Paste this into the project's CLAUDE.md / AGENTS.md when using **Portable mode**
 - History: decisions.md (ADR — file always present as a stub; entries appended on demand). Proposal: plans/<name>.md (draft→approved/rejected) — read on session start to check in-flight status before starting new work.
 - Sub-agents are stateless; docs/ is the only shared handoff channel — anything downstream needs must be written there.
 
-## Autoload (needs tool import support; else inline these summaries here)
+## Autoload (needs tool import support — Claude Code `@` imports; Codex / Antigravity have none → inline these summaries here)
 @docs/glossary.md
 @docs/architecture.md
 @docs/conventions.md
 - docs/ does NOT autoload by default. Autoload only lean summaries + short files (it pays tokens every session); never autoload architecture detail, decisions, or tasks/progress.
 
-## Deterministic guards (enforce via your tool's hook mechanism, NOT prose)
+## Deterministic guards (enforce via your tool's mechanism — hook / sandbox / tool-allowlist — NOT prose)
 - coder must not commit: a PreToolUse(Bash) hook blocks `git commit` / `git push` (the orchestrator commits after green).
-- tester/verifier read-only: remove Edit/Write + a PreToolUse(Bash) hook blocks mutating commands (git commit|add|push, rm, file redirects, package installs).
-- Claude Code: put these in the sub-agent's frontmatter `hooks:` (scoped to that agent only).
-- Codex: enforce tester/verifier read-only via the agent's own `.codex/agents/<name>.toml` field `sandbox_mode = "read-only"` (cleaner than a hook — no guard needed). For coder no-commit, use a global `[hooks]` PreToolUse **command** hook in `config.toml` / `hooks.json` matching `git commit|push`. GOTCHA: Codex runs **command** hooks only — `prompt` and `agent` hook handlers are parsed but silently skipped, so a guard written as a prompt hook does nothing. Codex hooks are global + matcher-scoped, not per-agent like Claude's frontmatter.
-- No hook support → state explicitly that the restriction is advisory only.
+- tester writes TEST FILES ONLY: keep Edit/Write (it authors tests and runs container wrappers like `docker run --rm …`), but block commit/push + package installs. "Tests only" is enforceable only where per-path guards exist (see per-tool notes); elsewhere it stays prose, backstopped by the read-only verifier.
+- verifier strictly read-only: remove Edit/Write + a PreToolUse(Bash) hook blocks mutating commands (git commit|add|push, rm, file redirects, package installs).
+- Claude Code: put guards in the sub-agent's frontmatter `hooks:` (scoped to that agent only). Tester's "tests only" CAN be enforced here: a PreToolUse(Edit|Write) hook that path-checks against the repo's test dirs (take them from architecture.md).
+- Codex: verifier via the agent's own `.codex/agents/<name>.toml` field `sandbox_mode = "read-only"` (cleaner than a hook — no guard needed). Tester needs a writable sandbox; block commit/push via the global `[hooks]` PreToolUse **command** hook in `config.toml` / `hooks.json` — no per-path write restriction exists, so "tests only" stays prose. GOTCHA: Codex runs **command** hooks only — `prompt` and `agent` hook handlers are parsed but silently skipped, so a guard written as a prompt hook does nothing. Codex hooks are global + matcher-scoped, not per-agent like Claude's frontmatter.
+- Antigravity (agy): the per-agent guard is the `toolNames` allowlist in the agent spec (global agents: `~/.gemini/antigravity-cli/agents/<name>/agent.json`). Verifier: REMOVE `write_to_file` / `replace_file_content` / `multi_replace_file_content` from `toolNames`. Tester: keep them (it writes tests); "tests only" stays prose. GOTCHA: a "read-only" line in the agent's system prompt while the write tools remain in `toolNames` is a fake guard. agy has no user-facing hook config, so command-level guards (coder's no-commit) are advisory there — say so.
+- No hook / sandbox / allowlist support → state explicitly that the restriction is advisory only.
 - NOTE: "main agent never writes source" stays a prose discipline — the orchestrator holds all tools, so it can't be cleanly hook-enforced.
 ```

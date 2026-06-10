@@ -32,7 +32,7 @@ The skill decides which mode to run during its Detect step — you don't pick.
 
 - Are the six mandatory files present and properly populated? (architecture.md Environment section filled with real values; conventions.md stub + autoloaded; decisions.md stub; flow.md stub; glossary.md stub; project rules file with `agents-md-sync` region markers + work loop linked or embedded + docs/ autoloaded/read-instructed)
 - Is the hot tier maintained? (tasks.md / progress.md actively updated; progress.md is an outcome summary, not a duplicate of tasks.md checkmarks)
-- Are commit / source-write restrictions enforced by a real hook rather than prose?
+- Are commit / source-write restrictions enforced by a real mechanism (hook / sandbox / tool-allowlist) rather than prose?
 - Is the main rules file lean (~80–120 lines)?
 - Are sub-agents really using `docs/` as shared memory, or flying blind?
 - Any project-level rule that just duplicates a global one?
@@ -84,11 +84,12 @@ The template wires up a two-phase loop so planning and execution stay separated:
 
 ## Deterministic guards
 
-Discipline that matters is enforced by your tool's hook mechanism, not by hoping the agent behaves:
+Discipline that matters is enforced by your tool's real mechanism (hook / sandbox / tool-allowlist), not by hoping the agent behaves:
 
 - The **coder can't commit** — a `PreToolUse(Bash)` hook blocks `git commit` / `git push`; the orchestrator commits after green.
-- **Tester and verifier are read-only** — Edit/Write removed, plus a hook blocking mutating commands (commits, `rm`, file redirects, package installs).
-- On Claude Code these live in the sub-agent's frontmatter `hooks:`, scoped to that agent only.
+- The **tester writes tests only** — it keeps edit/write so it can author tests and run container wrappers (e.g. `docker run --rm …`), but commits and package installs are blocked. Where the tool supports per-path guards, writes are restricted to the test dirs; elsewhere "tests only" is honest prose, backstopped by the verifier.
+- The **verifier is strictly read-only** — Edit/Write removed, plus a hook blocking mutating commands (commits, `rm`, file redirects, package installs).
+- On Claude Code these live in the sub-agent's frontmatter `hooks:`, scoped to that agent only; on Codex the verifier uses `sandbox_mode = "read-only"`; on Antigravity (agy) the per-agent guard is the `toolNames` allowlist in `agent.json` — a "read-only" line in the prompt while write tools stay listed is a fake guard.
 
 Where a guard genuinely can't be enforced — e.g. "the main agent never writes source," since the orchestrator holds all tools — the skill says so honestly rather than pretending. If your tool has no hook support, restrictions are flagged as advisory only.
 

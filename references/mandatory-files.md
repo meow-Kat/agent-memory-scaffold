@@ -7,7 +7,7 @@ Per-file specs and templates for the six mandatory files agent-memory-scaffold c
 Always create `docs/architecture.md` during scaffold. It is the env fingerprint coder / tester / verifier need before they can run.
 
 ### Detect (deterministic — call the bundled script)
-`detect-env.py` ships in this skill's own folder — resolve the path from wherever the skill is installed, don't hardcode a tool-specific prefix (Claude Code: `~/.claude/skills/agent-memory-scaffold/`; Codex: `~/.codex/skills/agent-memory-scaffold/`; project-scoped installs live under `.claude/skills/` or `.codex/skills/`).
+`detect-env.py` ships in this skill's own folder — resolve the path from wherever the skill is installed, don't hardcode a tool-specific prefix (Claude Code: `~/.claude/skills/agent-memory-scaffold/`; Codex: `~/.codex/skills/agent-memory-scaffold/`; Antigravity (agy): `~/.gemini/antigravity-cli/skills/agent-memory-scaffold/`; project-scoped installs live under `.claude/skills/` or `.codex/skills/`).
 ```bash
 python3 <skill-dir>/detect-env.py [<repo-root>]
 ```
@@ -21,7 +21,7 @@ This script is the ONLY source of truth for detection — do not re-parse manife
 Use the `asks[]` array from the JSON verbatim as the consolidated question set. No blanks. No guesses.
 
 ### Test framework field — must be a runnable command
-Record the **exact command a read-only tester can paste and run**, including the container wrapper if the host runtime can't run it natively (e.g. `docker run --rm … vendor/bin/phpunit`). A bare framework name ("phpunit", "pytest") is insufficient — the tester will improvise and drift, and a containerized run may trip an over-broad write-guard. If host ≠ runtime, capture the wrapper here so the loop stays runnable.
+Record the **exact command the tester can paste and run**, including the container wrapper if the host runtime can't run it natively (e.g. `docker run --rm … vendor/bin/phpunit`). A bare framework name ("phpunit", "pytest") is insufficient — the tester will improvise and drift, and a containerized run may trip an over-broad write-guard. If host ≠ runtime, capture the wrapper here so the loop stays runnable.
 
 ### Structure section
 - Plan exists (`docs/plans/*.md` listing affected files / modules) → infer from it.
@@ -52,14 +52,14 @@ Record the **exact command a read-only tester can paste and run**, including the
 
 ## Project rules file (CLAUDE.md / AGENTS.md) — mandatory
 
-Create the main rules file during scaffold — `CLAUDE.md` for Claude Code, `AGENTS.md` for Codex, both (region-marker shared) for cross-tool. Sub-agents read this before acting; without it they fly blind.
+Create the main rules file during scaffold — `CLAUDE.md` for Claude Code, `AGENTS.md` for Codex AND Antigravity (agy reads `AGENTS.md` at both its global and workspace customization roots), both (region-marker shared) for cross-tool. Sub-agents read this before acting; without it they fly blind.
 
 ### Mode
 - Global rules file exists with the work loop → **Lean**: only autoload + project overrides; assume global supplies work loop / roles / tiers.
 - Otherwise → **Portable**: embed the content of `references/template-b.md` in full.
 
 ### Wrap in `agents-md-sync` region markers
-`<!-- harness:shared:start -->` … `<!-- harness:shared:end -->` for tool-neutral content; empty `harness:claude:*` and `harness:codex:*` regions below. Keeps `/agents-md-sync` idempotent from day one.
+`<!-- harness:shared:start -->` … `<!-- harness:shared:end -->` for tool-neutral content; empty `harness:claude:*` and `harness:codex:*` regions below. Keeps `/agents-md-sync` idempotent from day one. NOTE: regions only control what `/agents-md-sync` copies — they do NOT scope what a tool reads. Codex and Antigravity both read the whole `AGENTS.md`, so tool-specific differences (e.g. guard mechanisms) belong as per-tool bullets ("Codex: …", "agy: …") inside the shared region, not in separate regions.
 
 ### Lean template (paste verbatim — drop the title; the directory is the identity)
 ```markdown

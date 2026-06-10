@@ -8,7 +8,7 @@ Audit my GLOBAL setup. Mark each: Has / Partial / Missing.
 
 TARGET (express in this tool's own conventions) —
 - 3 reusable, project-agnostic roles — coder, tester, verifier — built as AGENTS, NOT skills (a skill can't be dispatched as a role and has no context isolation = wrong category). Planning is the main/orchestrator agent's job, NOT a subagent. Each agent must read the project's docs/ + main rules file before acting (stateless roles → docs/ is the only handoff channel).
-- Least privilege: coder writes code; tester & verifier read-only (Edit/Write removed + a mutating-Bash hook).
+- Least privilege: coder is the only SOURCE-code writer (no commit/push); tester may write TEST files only + run tests/lint/build incl. container wrappers (no commit, no installs); verifier strictly read-only (Edit/Write removed + a mutating-Bash hook, or the tool's sandbox / tool-allowlist equivalent).
 - Personal cross-project preferences, kept lean.
 - TWO-PHASE workflow rule, written INLINE in the global rules file (no external skill required — procedures inlined so the LLM can't "forget to invoke"):
   • Phase 1 — PROPOSE: new requirement → PLAN draft at `<repo>/docs/plans/<name>.md`, one file per requirement, with a status header (draft → approved / rejected). Then STOP and discuss. Do NOT create tasks, do NOT touch architecture, do NOT start coding yet.
@@ -25,7 +25,7 @@ CHECK —
 1. For each of coder / tester / verifier: AGENT or SKILL? Flag any built as a skill as MISCATEGORIZED, with exact conversion steps (file location, required frontmatter, how to set permissions).
 2. Do all 3 agents exist at global scope?
 3. Is each told to read `docs/` first?
-4. Are tester/verifier read-only (Edit/Write removed + mutating-Bash hook)?
+4. Is the verifier strictly read-only, enforced by the tool's real mechanism (Claude Code: Edit/Write removed + mutating-Bash hook; Codex: `sandbox_mode = "read-only"`; Antigravity: write tools removed from the agent.json `toolNames` allowlist)? Is the tester allowed to write TEST files (it authors tests and runs container wrappers) but still blocked from commit/push and package installs — with "tests only" enforced per-path where the tool supports it (e.g. Claude per-agent PreToolUse(Edit|Write) path check), else honestly marked prose + verifier backstop? Flag any "read-only" that exists only in the agent's prompt while its tool list still includes write tools — that is a fake guard.
 5. Are personal prefs lean (no rules the model already follows)?
 6. TWO-PHASE workflow inlined in the global rules file with explicit STOP + approval gate + retry caps as concrete numbers (not "see /execute skill" or similar)? If procedures live in external skills the LLM has to choose to invoke, flag as drift-prone.
 7. Plan-output: does the GLOBAL RULE require plan drafts at repo-relative `<repo>/docs/plans/` (NOT scratch), one per requirement, with a status header, in 繁體中文? And does this tool have a built-in "plan" behavior hardwired to a scratch/ephemeral path, a fixed language, or auto-execute (skipping the discussion gate) that prompts can't override? If yes, say so. If the PROPOSE gate can be enforced deterministically (hook/tool setting), recommend it; if it genuinely can't (e.g. "a new requirement" is not a detectable event), say so plainly and treat prose discipline in the global rules file as the honest mechanism — don't invent a hook that can't exist.
