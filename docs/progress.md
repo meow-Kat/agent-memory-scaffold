@@ -1,5 +1,24 @@
 # Progress
 
+## 2026-06-11 — README sync + detect-env hardening (plan: readme-sync-and-detect-env-hardening)
+
+Outcome: closed the drift + hardening gaps found in the 2026-06-11 review. README
+audit checklist caught up with SKILL.md items h/i/j (was 7 of 10) and the structure
+diagram now explains prompt.md / prompt-scaffold.md as standalone workshop prompts
+the skill never loads. detect-env.py: python-version regex line-anchored (regression:
+`ipython = "^8.0"` parsed as the version), tool detection word-bounded ("blackjack"
+no longer registers black), E741 names fixed. Added tests/test_detect_env.py — 9
+stdlib-unittest fixture tests (no pytest dependency), all green; ruff clean. Added
+.gitignore and docs/decisions.md with ADR-0001 (tester role model, promoted from the
+antigravity plan's trade-off section). docs/ itself is now tracked in git.
+
+Deliberately NOT done (review conclusions): no CI / pytest / ruff config (prose
+skill — traditional gates don't apply); no architecture/flow/glossary/conventions
+stubs (six-mandatory rule targets projects with a dev loop, not this skill repo);
+prompt*.md not moved into a subfolder (install-layout decision deferred).
+
+Executed directly by the main agent (user-approved verbally, role agents waived).
+
 ## 2026-06-10 — Antigravity coverage + tester role change (plan: antigravity-coverage-and-tester-write)
 
 Outcome: skill now covers three tools (Claude Code / Codex / Antigravity) and the role

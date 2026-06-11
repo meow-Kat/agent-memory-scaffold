@@ -42,7 +42,10 @@ def detect_python(root: Path) -> dict | None:
         if m:
             version = m.group(1)
     elif pyproject:
-        m = re.search(r'(?:python|requires-python)\s*=\s*"([^"]+)"', pyproject)
+        # line-anchored so dependency keys like `ipython = "^8.0"` don't match
+        m = re.search(
+            r'^\s*(?:requires-python|python)\s*=\s*"([^"]+)"', pyproject, re.M
+        )
         if m:
             version = m.group(1)
 
@@ -62,11 +65,16 @@ def detect_python(root: Path) -> dict | None:
         pkg = None
 
     blob = " ".join(s for s in (pyproject, requirements, setup_py) if s)
+
+    def named(tool: str) -> bool:
+        # word-boundary match so e.g. "black" doesn't hit "blackjack"
+        return re.search(rf"\b{re.escape(tool)}\b", blob) is not None
+
     test_fw = next(
-        (fw for fw in ("pytest", "unittest", "nose", "tox") if fw in blob), None
+        (fw for fw in ("pytest", "unittest", "nose", "tox") if named(fw)), None
     )
     lints = [
-        t for t in ("ruff", "black", "flake8", "pylint", "mypy", "isort") if t in blob
+        t for t in ("ruff", "black", "flake8", "pylint", "mypy", "isort") if named(t)
     ] or None
 
     manifests = [
@@ -231,13 +239,13 @@ def main():
     if not languages:
         asks.append("Language(s) in use (no manifest detected)")
     elif len(languages) > 1:
-        names = ", ".join(l["name"] for l in languages)
+        names = ", ".join(lang["name"] for lang in languages)
         asks.append(f"Primary language (detected: {names})")
     asks.append("Run / start command")
     asks.append("Build / CI command (or confirm none)")
-    if not any(l.get("test_framework") for l in languages):
+    if not any(lang.get("test_framework") for lang in languages):
         asks.append("Test framework (or confirm none)")
-    if not any(l.get("lint_format") for l in languages):
+    if not any(lang.get("lint_format") for lang in languages):
         asks.append("Lint / format (or confirm none)")
 
     out = {

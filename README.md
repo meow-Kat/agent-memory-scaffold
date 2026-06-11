@@ -32,11 +32,14 @@ The skill decides which mode to run during its Detect step — you don't pick.
 
 - Are the six mandatory files present and properly populated? (architecture.md Environment section filled with real values; conventions.md stub + autoloaded; decisions.md stub; flow.md stub; glossary.md stub; project rules file with `agents-md-sync` region markers + work loop linked or embedded + docs/ autoloaded/read-instructed)
 - Is the hot tier maintained? (tasks.md / progress.md actively updated; progress.md is an outcome summary, not a duplicate of tasks.md checkmarks)
-- Are commit / source-write restrictions enforced by a real mechanism (hook / sandbox / tool-allowlist) rather than prose?
+- Are commit / source-write restrictions enforced by a real mechanism (hook / sandbox / tool-allowlist) rather than prose — and not over-blocking? (the tester must still be able to write test files and run the documented test command, container wrapper included; verified by running it, not by reading the config)
 - Is the main rules file lean (~80–120 lines)?
 - Are sub-agents really using `docs/` as shared memory, or flying blind?
 - Any project-level rule that just duplicates a global one?
 - Is `detect-env.py` reachable from the skill folder?
+- Does work-loop steering survive compaction? (a UserPromptSubmit-equivalent hook re-injects the two-phase routing every prompt; tools without such a mechanism are marked unsupported, not Missing)
+- Are the roles operable, not just present? (the tester is dispatched to actually run the project's documented test/lint command — presence of the agent ≠ ability to do its job)
+- Does the hot tier match the working tree? (tasks.md / progress.md cross-checked against `git status` / `git diff`; drift makes sub-agents redo or conflict with in-flight work)
 
 In both modes it **stops** afterward and waits for you — it never rolls on into a dev task.
 
@@ -102,11 +105,14 @@ agent-memory-scaffold/
 ├── references/
 │   ├── mandatory-files.md      # per-file specs + templates for the six mandatories
 │   └── template-b.md           # work-loop snippet to embed in Portable mode
+├── prompt.md                   # workshop prompt: audit your GLOBAL agent setup (standalone, not loaded by the skill)
+├── prompt-scaffold.md          # workshop prompt: create the three global role agents (standalone, not loaded by the skill)
+├── tests/                      # unittest fixtures for detect-env.py (stdlib only)
 ├── README.md
 └── LICENSE
 ```
 
-The agent loads `SKILL.md` on invocation and reads `references/*` on demand when actually creating files, keeping the always-loaded surface small.
+The agent loads `SKILL.md` on invocation and reads `references/*` on demand when actually creating files, keeping the always-loaded surface small. The two `prompt*.md` files are standalone workshop prompts you paste into a tool yourself — one audits your global setup against this skill's target, the other scaffolds the coder / tester / verifier role agents at global scope; the skill never loads them.
 
 ## Conventions
 
