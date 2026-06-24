@@ -66,7 +66,7 @@ docs/
 Plus the project's main rules file (`CLAUDE.md` / `AGENTS.md`) in one of two modes:
 
 - **Lean** — autoload + project-specific overrides only; assumes the global rules file already supplies the work loop. The skill picks Lean automatically when a global rules file with the work loop is detected.
-- **Portable** — embeds `references/template-b.md` in full (roles, work loop, memory tiers, autoload, deterministic guards) so the project is self-contained.
+- **Portable** — embeds `references/template-b.md` in full (roles, work loop, difficulty-driven model tiering, wave-based parallel execution, memory tiers, autoload, deterministic guards) so the project is self-contained.
 
 Both modes wrap content in `agents-md-sync` region markers (`<!-- harness:shared:start -->` …) from day one so future `/agents-md-sync` runs are idempotent.
 
