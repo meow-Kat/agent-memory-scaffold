@@ -22,7 +22,7 @@ entries are dated (newest first). Format loosely follows
 - Stopped tracking `docs/` in git — the project's working memory (plans/tasks/progress/
   decisions) is kept local and removed from the remote's current tree.
 - README: intro now highlights model tiering and wave execution; Portable-mode summary and
-  workshop audit prompt (`prompt.md`) updated to match.
+  workshop audit prompt (`prompt.md`) updated to match; overall README condensed (142 → 105 lines).
 
 ## 2026-06-11
 

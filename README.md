@@ -6,53 +6,34 @@
 
 AI coding agents forget everything between sessions. Without a structured place to keep plans, decisions, and project knowledge — plus a disciplined loop for using it — you re-explain context every time, decisions get lost, and sub-agents have no shared handoff channel.
 
-`agent-memory-scaffold` fixes that in one pass. On entering a project it figures out whether the structure is missing or already there, then either **scaffolds** the missing pieces from templates or runs a **read-only audit** of what exists. It never overwrites your files, never starts dev work on its own, and works on any agent that supports the Agent Skills standard.
+`agent-memory-scaffold` fixes that in one pass. On entering a project it detects whether the structure is missing or already there, then either **scaffolds** the missing pieces from templates or runs a **read-only audit** of what exists. It never overwrites your files, never starts dev work on its own, and works on any agent supporting the Agent Skills standard.
 
 Two work-loop capabilities it wires into every scaffold stand out:
 
 - **Difficulty-driven model tiering** — the orchestrator self-judges each task's difficulty and picks the model per-dispatch (on Claude Code: coder heavy → opus / standard → sonnet / light → haiku; tester one tier below; verifier fixed opus). No asking, with an optional per-project cap.
-- **Wave-based parallel execution** — independent tasks (disjoint files, no shared deps) run as concurrent coder/tester lanes, capped at 4 per wave; one integration test then a single verifier wraps up the wave. It degrades losslessly to sequential where parallel dispatch isn't available.
+- **Wave-based parallel execution** — independent tasks (disjoint files, no shared deps) run as concurrent coder/tester lanes, capped at 4 per wave; one integration test then a single verifier wraps up the wave. Degrades losslessly to sequential where parallel dispatch isn't available.
 
 ## Install
 
 ```bash
-npx skills add meow-Kat/agent-memory-scaffold
-```
-
-```bash
-# Install to a specific agent
-npx skills add meow-Kat/agent-memory-scaffold -a claude-code
-
-# Install globally (available in every project)
-npx skills add meow-Kat/agent-memory-scaffold -g
+npx skills add meow-Kat/agent-memory-scaffold       # current agent
+npx skills add meow-Kat/agent-memory-scaffold -a claude-code   # a specific agent
+npx skills add meow-Kat/agent-memory-scaffold -g    # globally, every project
 ```
 
 ## Two modes
 
-The skill decides which mode to run during its Detect step — you don't pick.
+The skill picks the mode during Detect — you don't.
 
-**Scaffold** (pieces are missing) — creates only the missing items from templates, reports which fields you must fill, and flags which mechanisms (autoload / hooks) depend on your specific tool and need confirming. Existing files are never touched. All six mandatory files (`architecture.md`, `conventions.md`, `decisions.md`, `flow.md`, `glossary.md`, and the project rules file) are always created — no conditional skip, because skipping at scaffold is path-dependent and the file stays missing forever. The rules file is wired to read docs/ (autoload + a "read docs/ before any task" instruction) so the scaffolded memory actually gets consulted.
+**Scaffold** (missing) — creates only the missing items from templates, reports which fields you must fill, and flags which mechanisms (autoload / hooks) depend on your tool. Existing files are never touched. All six mandatory files (`architecture.md`, `conventions.md`, `decisions.md`, `flow.md`, `glossary.md`, and the project rules file) are always created — skipping at scaffold is path-dependent and the file then stays missing forever. The rules file is wired to read `docs/` so the memory actually gets consulted.
 
-**Audit** (structure already exists) — a read-only review that changes nothing. Grading against the target structure, it marks each item **Has / Partial / Missing** per layer, gives a one-line fix for each, and surfaces the **top-3 highest-ROI gaps**. Checks include:
+**Audit** (structure exists) — a read-only review that changes nothing. It grades each item **Has / Partial / Missing** per layer, gives a one-line fix, and surfaces the **top-3 highest-ROI gaps**. Checks cover: the six mandatory files present and populated; the hot tier (tasks/progress) maintained and matching the working tree; commit / source-write guards enforced by a real mechanism (not prose) and not over-blocking; the rules file lean (~80–120 lines) with no redundant overrides; sub-agents actually using `docs/`; `detect-env.py` reachable; work-loop steering surviving compaction; roles operable (the tester really runs the documented test command); and **model tiering** and **parallel/wave execution** present and operable. Mechanisms a tool can't support are marked unsupported, not Missing.
 
-- Are the six mandatory files present and properly populated? (architecture.md Environment section filled with real values; conventions.md stub + autoloaded; decisions.md stub; flow.md stub; glossary.md stub; project rules file with `agents-md-sync` region markers + work loop linked or embedded + docs/ autoloaded/read-instructed)
-- Is the hot tier maintained? (tasks.md / progress.md actively updated; progress.md is an outcome summary, not a duplicate of tasks.md checkmarks)
-- Are commit / source-write restrictions enforced by a real mechanism (hook / sandbox / tool-allowlist) rather than prose — and not over-blocking? (the tester must still be able to write test files and run the documented test command, container wrapper included; verified by running it, not by reading the config)
-- Is the main rules file lean (~80–120 lines)?
-- Are sub-agents really using `docs/` as shared memory, or flying blind?
-- Any project-level rule that just duplicates a global one?
-- Is `detect-env.py` reachable from the skill folder?
-- Does work-loop steering survive compaction? (a UserPromptSubmit-equivalent hook re-injects the two-phase routing every prompt; tools without such a mechanism are marked unsupported, not Missing)
-- Are the roles operable, not just present? (the tester is dispatched to actually run the project's documented test/lint command — presence of the agent ≠ ability to do its job)
-- Does the hot tier match the working tree? (tasks.md / progress.md cross-checked against `git status` / `git diff`; drift makes sub-agents redo or conflict with in-flight work)
-- Is model tiering present and operable? (the work loop defines self-judged difficulty + coder/tester → opus/sonnet/haiku + verifier fixed opus, with the Claude Code dispatch `model` override; non-Claude tools are marked unsupported, not Missing)
-- Is parallel/wave execution safe? (the work loop defines wave grouping with independence gating — no two parallel lanes share files — an integration test before the verifier, and a single verifier per wave capped at 4 lanes; tools without parallel dispatch are marked unsupported, degrading to sequential, not Missing)
-
-In both modes it **stops** afterward and waits for you — it never rolls on into a dev task.
+Both modes **stop** afterward — they never roll on into a dev task.
 
 ## Precheck
 
-Before anything else, the skill confirms the work-loop roles exist as dispatchable sub-agents in your tool: **coder**, **tester**, **verifier**. (The planner is always the main agent / orchestrator — never a sub-agent.) It checks the global / user agent scope first — if these roles already live there, they're treated as present and you're not asked to recreate them per-project. Only if they're genuinely missing everywhere does the skill stop and ask you to set them up first. If your tool has no sub-agent mechanism at all, it says so, and the loop degrades to the main agent doing every step itself.
+The skill first confirms the work-loop roles exist as dispatchable sub-agents — **coder**, **tester**, **verifier** (the planner is always the main agent). It checks global/user scope first; if the roles live there they count as present. If they're missing everywhere it stops and asks you to set them up; if the tool has no sub-agent mechanism, the loop degrades to the main agent doing every step.
 
 ## What it scaffolds
 
@@ -68,74 +49,56 @@ docs/
 └── decisions.md     # history: ADR log (mandatory stub)
 ```
 
-Plus the project's main rules file (`CLAUDE.md` / `AGENTS.md`) in one of two modes:
+Plus the project's main rules file (`CLAUDE.md` / `AGENTS.md`), in **Lean** mode (autoload + overrides, when a global rules file already supplies the work loop) or **Portable** mode (embeds `references/template-b.md` in full — roles, work loop, model tiering, wave execution, memory tiers, autoload, guards). Both wrap content in `agents-md-sync` region markers so `/agents-md-sync` stays idempotent.
 
-- **Lean** — autoload + project-specific overrides only; assumes the global rules file already supplies the work loop. The skill picks Lean automatically when a global rules file with the work loop is detected.
-- **Portable** — embeds `references/template-b.md` in full (roles, work loop, difficulty-driven model tiering, wave-based parallel execution, memory tiers, autoload, deterministic guards) so the project is self-contained.
+For `architecture.md`, a bundled **`detect-env.py`** reads your manifests, version pins, and env vars (`pyproject.toml` / `package.json` / `Cargo.toml` / `go.mod` / `Gemfile`, `.python-version` / `.nvmrc`, `$CONDA_DEFAULT_ENV` …) to fill the Environment section deterministically — no LLM re-parsing each session. Whatever it can't detect, the skill asks for in one consolidated round: no blanks, no guesses.
 
-Both modes wrap content in `agents-md-sync` region markers (`<!-- harness:shared:start -->` …) from day one so future `/agents-md-sync` runs are idempotent.
-
-For `architecture.md` specifically, a bundled **`detect-env.py`** reads your project's manifests (`pyproject.toml` / `package.json` / `Cargo.toml` / `go.mod` / `Gemfile`), version pins (`.python-version` / `.nvmrc` / `.tool-versions`), and env vars (`$CONDA_DEFAULT_ENV` / `$VIRTUAL_ENV`) to fill the Environment section deterministically — no LLM re-parsing each session. Whatever the script can't detect (run command, build / CI command, etc.) the skill asks for in one consolidated round: no blanks, no guesses.
-
-Memory is organized in tiers:
-
-- **Stable** (read-only background) — architecture, conventions, flow, glossary. Read before any task; updated only on a real structural/flow change, a new term, or a new recurring rule. `conventions.md` holds forward-binding rules / gotchas promoted from `decisions.md` or user feedback (one-offs stay in decisions).
-- **Hot** (per-task) — tasks and progress. Read on session start to resume in-flight work; they don't autoload.
-- **History** — decisions / ADRs (stub mandatory; entries appended on demand) plus proposals under `plans/`.
+Memory is tiered: **Stable** (architecture / conventions / flow / glossary — read before any task, rarely written), **Hot** (tasks / progress — read on session start), and **History** (decisions/ADRs + proposals under `plans/`).
 
 ## The work loop
 
-The template wires up a two-phase loop so planning and execution stay separated:
+A two-phase loop keeps planning and execution separate:
 
 1. **Propose** — a new requirement becomes a draft in `docs/plans/`, then stops for discussion.
-2. **Gate** — it needs your approval; rejected proposals are marked as such.
+2. **Gate** — your approval is required; rejected proposals are marked.
 3. **Execute** — split into `docs/tasks.md`, then coder → tester → verifier → all green → commit → update progress.
-4. **On failure** — back to the coder with the error. Retry caps: coder ↔ tester max 3 rounds (same failure twice → stop early); verifier runs once; 5 edits on one file → escalate.
+4. **On failure** — back to the coder. Retry caps: coder ↔ tester max 3 rounds (same failure twice → stop early); verifier runs once; 5 edits on one file → escalate.
 
-On Claude Code the orchestrator self-judges each task's difficulty and dynamically picks the model per-dispatch — coder heavy → opus, standard → sonnet, light → haiku; tester one tier below (matching coder on heavy/security-sensitive work); the verifier is fixed on opus. No asking — grading and model choice are self-judged, with an optional `architecture.md` `Model tiers` cap. On non-Claude tools this degrades to the tool's default / advisory.
-
-For throughput, the orchestrator may also group independent tasks into **waves** and run them in parallel: tasks in one wave must have disjoint file sets and no inter-task dependency (no two coders write the same file), capped at 4 lanes/wave. Each lane is still its own coder → tester loop; once all lanes are green, one **integration test** runs over the merged tree, then a single **verifier wraps up the whole wave** (reporting each task separately), and the wave is committed once. Overlapping or dependent tasks stay sequential, and the wave grouping itself is tool-neutral — parallelism is an optimization that degrades losslessly to sequential lanes on tools without parallel sub-agent dispatch.
+On Claude Code the orchestrator self-judges difficulty and picks the model per-dispatch (model tiering, above), and may group independent tasks into **waves** run in parallel — concurrent coder/tester lanes (cap 4), then one integration test, then a single verifier per wave. Overlapping/dependent tasks stay sequential; parallelism degrades losslessly to sequential where unsupported.
 
 ## Deterministic guards
 
-Discipline that matters is enforced by your tool's real mechanism (hook / sandbox / tool-allowlist), not by hoping the agent behaves:
-
-- The **coder can't commit** — a `PreToolUse(Bash)` hook blocks `git commit` / `git push`; the orchestrator commits after green.
-- The **tester writes tests only** — it keeps edit/write so it can author tests and run container wrappers (e.g. `docker run --rm …`), but commits and package installs are blocked. Where the tool supports per-path guards, writes are restricted to the test dirs; elsewhere "tests only" is honest prose, backstopped by the verifier.
-- The **verifier is strictly read-only** — Edit/Write removed, plus a hook blocking mutating commands (commits, `rm`, file redirects, package installs).
-- On Claude Code these live in the sub-agent's frontmatter `hooks:`, scoped to that agent only; on Codex the verifier uses `sandbox_mode = "read-only"`; on Antigravity (agy) the per-agent guard is the `toolNames` allowlist in `agent.json` — a "read-only" line in the prompt while write tools stay listed is a fake guard.
-
-Where a guard genuinely can't be enforced — e.g. "the main agent never writes source," since the orchestrator holds all tools — the skill says so honestly rather than pretending. If your tool has no hook support, restrictions are flagged as advisory only.
+Discipline is enforced by your tool's real mechanism (hook / sandbox / tool-allowlist), not prose: the **coder can't commit** (a `PreToolUse(Bash)` hook blocks `git commit`/`push`; the orchestrator commits after green); the **tester writes tests only** (keeps edit/write for authoring tests and container wrappers, but commits/installs blocked — per-path where the tool supports it, else honest prose backstopped by the verifier); the **verifier is strictly read-only** (Edit/Write removed + a mutating-command hook). On Claude Code these live in per-agent frontmatter `hooks:`; on Codex via `sandbox_mode = "read-only"`; on Antigravity via the `agent.json` `toolNames` allowlist. Where a guard genuinely can't be enforced (e.g. the orchestrator holds all tools), the skill says so rather than pretending.
 
 ## Skill structure
 
 ```
 agent-memory-scaffold/
-├── SKILL.md                    # core: precheck, steps, audit criteria, conventions, mandatory-file pointers
+├── SKILL.md                    # core: precheck, steps, audit criteria, conventions
 ├── detect-env.py               # bundled deterministic env-fingerprint script
 ├── references/
 │   ├── mandatory-files.md      # per-file specs + templates for the six mandatories
 │   └── template-b.md           # work-loop snippet to embed in Portable mode
-├── prompt.md                   # workshop prompt: audit your GLOBAL agent setup (standalone, not loaded by the skill)
-├── prompt-scaffold.md          # workshop prompt: create the three global role agents (standalone, not loaded by the skill)
+├── prompt.md                   # workshop prompt: audit your GLOBAL setup (standalone)
+├── prompt-scaffold.md          # workshop prompt: create the three role agents (standalone)
 ├── tests/                      # unittest fixtures for detect-env.py (stdlib only)
 ├── CHANGELOG.md                # dated change log (newest first)
 ├── README.md
 └── LICENSE
 ```
 
-The agent loads `SKILL.md` on invocation and reads `references/*` on demand when actually creating files, keeping the always-loaded surface small. The two `prompt*.md` files are standalone workshop prompts you paste into a tool yourself — one audits your global setup against this skill's target, the other scaffolds the coder / tester / verifier role agents at global scope; the skill never loads them.
+The agent loads `SKILL.md` on invocation and reads `references/*` on demand, keeping the always-loaded surface small. The two `prompt*.md` files are standalone — you paste them into a tool yourself; the skill never loads them.
 
 ## Conventions
 
-- **Tool-neutral.** Concepts like *main rules file*, *import*, *hook*, and *sub-agent* are mapped onto your agent's actual mechanisms; if something isn't supported, the closest substitute is used and called out.
-- **Never overwrites.** Only missing pieces are added; Audit mode writes nothing at all.
-- **English filenames; English content by default, working language only for plan drafts.** All scaffolded files (project rules file, architecture.md, conventions.md, flow.md, glossary.md, decisions.md, tasks.md, progress.md) are concise English so sub-agents can parse them. The single exception is `docs/plans/*.md` body, which is written in the project's working language (e.g. 繁體中文) for human review.
-- **Repo-relative.** All output goes to the current repo's `docs/`, never a session scratch directory. If you're not in a repo, the skill asks where to write.
+- **Tool-neutral** — *main rules file*, *import*, *hook*, *sub-agent* map onto your agent's mechanisms; unsupported ones fall back to the closest substitute, called out.
+- **Never overwrites** — only missing pieces are added; Audit writes nothing.
+- **English filenames + content**, except `docs/plans/*.md` bodies (the project's working language, for human review).
+- **Repo-relative** — output goes to the current repo's `docs/`, never a scratch dir; if you're not in a repo, the skill asks where.
 
 ## Compatibility
 
-Works with any agent that supports the [Agent Skills standard](https://agentskills.io) — Claude Code, Cursor, Codex, Antigravity, Gemini CLI, GitHub Copilot, OpenCode, and more. The skill uses only the core `name` / `description` frontmatter, so it degrades gracefully on agents with fewer features. Hook-based guards require a tool that supports hooks (e.g. Claude Code); elsewhere they fall back to advisory rules.
+Works with any agent supporting the [Agent Skills standard](https://agentskills.io) — Claude Code, Cursor, Codex, Antigravity, Gemini CLI, GitHub Copilot, OpenCode, and more. It uses only core `name` / `description` frontmatter, so it degrades gracefully. Hook-based guards require a tool with hook support; elsewhere they fall back to advisory rules.
 
 ## License
 
