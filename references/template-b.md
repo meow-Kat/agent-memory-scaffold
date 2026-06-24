@@ -15,6 +15,18 @@ Paste this into the project's CLAUDE.md / AGENTS.md when using **Portable mode**
    - Close-out stable-tier upkeep (main agent): structural/flow change → architecture.md / flow.md; major trade-off → prepend ADR to decisions.md; **recurring or generalizable lesson, or a user correction → promote a one-line rule into conventions.md (link `→ ADR-NNNN`), dedup/rewrite as the code evolves**. One-offs stay in decisions.md only — don't inflate conventions.
 4. On failure: return to coder with the error, else stop and report. Retry caps: coder↔tester max 3 rounds (same failure twice → stop early); verifier runs once; 5 edits on one file → escalate.
 
+## Model tiering (difficulty-driven dispatch — Claude Code)
+- Orchestrator self-grades each task's difficulty at dispatch time (no asking the user; grading AND model choice are self-judged), then picks the coder/tester model per-dispatch. Signals: change size/scope, new module vs localized edit, algorithmic/concurrency/security sensitivity, ambiguity, blast radius, whether a prior attempt failed.
+- Rubric → model: light (localized edit, low blast radius, unambiguous) → haiku; standard (typical feature, contained scope) → sonnet; heavy (new module, algorithm/concurrency/security-sensitive, high blast radius, or prior attempt failed) → opus.
+- Per role:
+  - coder: heavy → opus, standard → sonnet, light → haiku (model aligns to difficulty).
+  - tester: default one tier below coder (opus→sonnet, sonnet→haiku, haiku→haiku); for heavy or security-sensitive tasks → match coder.
+  - verifier: FIXED opus, not tiered — the read-only final gate always uses the strongest model.
+- Escalation bump (ties to the Work loop retry caps above): on a coder↔tester retry or the same failure twice, bump the model one tier (cap at opus).
+- Switch mechanism (Claude Code): the orchestrator passes the `model` param (opus/sonnet/haiku) when dispatching via the Agent/Task tool; the sub-agent frontmatter `model:` is the default/fallback when no param is passed.
+- Optional override: `architecture.md` Environment `Model tiers` (default `auto` = self-judge) can cap/pin per project (e.g. "heavy also only sonnet"); honor it over the rubric.
+- Non-Claude tools: this subsection does not apply — model selection degrades to the tool's default / advisory.
+
 ## Memory tiers (docs/; English filenames; content English by default, working language only for plans/*; repo docs/ never scratch)
 - Stable (read-only bg, rarely written): architecture.md / conventions.md / flow.md / glossary.md — read before any task; update only on structural/flow change, new term, or new recurring rule. conventions.md = forward-binding rules / gotchas promoted from decisions.md or user feedback (one-offs stay in decisions.md).
 - Hot (per task): tasks.md (plan) / progress.md (after completion). On session start, READ both manually before acting — they don't autoload.

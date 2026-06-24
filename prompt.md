@@ -19,6 +19,7 @@ TARGET (express in this tool's own conventions) —
 - Generated files go to the CURRENT repo's `docs/` (repo-relative path), NEVER the session/conversation scratch dir — when not in a repo, ask where to write.
 - Language split: ONLY `docs/plans/*.md` body is in working language (e.g. 繁體中文) for human review. Everything else — project rules file, all stable-tier docs (architecture / conventions / flow / glossary), `decisions.md` (structure AND ADR entry text), `tasks.md`, `progress.md` — is concise English so sub-agents can parse them.
 - Deterministic env fingerprint: language / version / env manager / package manager / test framework / lint detection MUST offload to a deterministic script or hook the workflow CALLS (e.g. `detect-env.py` beside the scaffold skill). LLM re-parsing manifests each session is forbidden — drift-prone.
+- Model tiering (Claude Code): the global setup lets the orchestrator self-judge each task's difficulty and pick the coder/tester model per-dispatch via the dispatch `model` override (frontmatter `model:` as fallback) — coder heavy→opus / standard→sonnet / light→haiku; tester one tier below coder (match coder on heavy/security-sensitive); verifier FIXED opus (not tiered). Escalation bump ties to the retry caps (retry or same failure twice → bump one tier, cap opus). No asking the user. Non-Claude tools → unsupported, degrades to that tool's default / advisory.
 - Global permissions, reusable commands, skills, guards — whatever this tool supports.
 
 CHECK —
@@ -33,6 +34,7 @@ CHECK —
 9. Six-mandatory rule: does the global setup mandate all six `docs/` files (architecture / conventions / decisions / flow / glossary / project rules file) as no-skip-at-scaffold? Or do conditional-skip phrases like "skip if trivial" / "skip if no jargon" / "skip if no recurring rule" persist (which lead to permanent under-documentation)?
 10. Language rule: is "ONLY `plans/*.md` is working language; everything else English" explicit, or does vague "file content in working language" persist?
 11. Deterministic env detection: is there a script/hook the scaffold path actually CALLS (state its file path)? Confirm the scaffold skill REFERENCES the script (e.g. an explicit `python3 .../detect-env.py` line in SKILL.md), not just describes detection steps in prose. LLM-only manifest re-reading = drift-prone, flag.
+12. Model tiering: does the global setup let the orchestrator self-judge difficulty and pick the coder/tester model per-dispatch (Claude Code dispatch `model` override / frontmatter `model:`), with coder→opus/sonnet/haiku, tester one tier below (match coder on heavy/security-sensitive), verifier FIXED opus, and the escalation bump tied to retry caps? Confirm it is self-judged (not asked). For non-Claude tools mark unsupported (degrades to that tool's default / advisory), NOT Missing.
 
 If this tool genuinely has NO agent/sub-agent mechanism and skills are the closest thing, say so explicitly and give the best workaround — don't pretend a skill is an agent.
 

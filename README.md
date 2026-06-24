@@ -40,6 +40,7 @@ The skill decides which mode to run during its Detect step — you don't pick.
 - Does work-loop steering survive compaction? (a UserPromptSubmit-equivalent hook re-injects the two-phase routing every prompt; tools without such a mechanism are marked unsupported, not Missing)
 - Are the roles operable, not just present? (the tester is dispatched to actually run the project's documented test/lint command — presence of the agent ≠ ability to do its job)
 - Does the hot tier match the working tree? (tasks.md / progress.md cross-checked against `git status` / `git diff`; drift makes sub-agents redo or conflict with in-flight work)
+- Is model tiering present and operable? (the work loop defines self-judged difficulty + coder/tester → opus/sonnet/haiku + verifier fixed opus, with the Claude Code dispatch `model` override; non-Claude tools are marked unsupported, not Missing)
 
 In both modes it **stops** afterward and waits for you — it never rolls on into a dev task.
 
@@ -84,6 +85,8 @@ The template wires up a two-phase loop so planning and execution stay separated:
 2. **Gate** — it needs your approval; rejected proposals are marked as such.
 3. **Execute** — split into `docs/tasks.md`, then coder → tester → verifier → all green → commit → update progress.
 4. **On failure** — back to the coder with the error. Retry caps: coder ↔ tester max 3 rounds (same failure twice → stop early); verifier runs once; 5 edits on one file → escalate.
+
+On Claude Code the orchestrator self-judges each task's difficulty and dynamically picks the model per-dispatch — coder heavy → opus, standard → sonnet, light → haiku; tester one tier below (matching coder on heavy/security-sensitive work); the verifier is fixed on opus. No asking — grading and model choice are self-judged, with an optional `architecture.md` `Model tiers` cap. On non-Claude tools this degrades to the tool's default / advisory.
 
 ## Deterministic guards
 

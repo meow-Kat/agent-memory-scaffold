@@ -1,5 +1,26 @@
 # Progress
 
+## 2026-06-24 — Difficulty-driven model tiering for coder/tester (plan: dynamic-model-tiering-by-difficulty)
+
+Outcome: the scaffolded work loop now bakes in dynamic model selection — the orchestrator
+self-judges each Phase 2 task's difficulty and picks the Claude Code model per-dispatch, no
+asking the user. Mapping: coder heavy→opus / standard→sonnet / light→haiku; tester one tier
+below coder (heavy/security → match coder); verifier FIXED opus (read-only final gate stays
+strongest). Escalation bump tied to the existing retry caps (retry / same-failure-twice →
++1 tier, cap opus). Switch mechanism = orchestrator passes `model` on dispatch, sub-agent
+frontmatter `model:` as fallback. Scope was deliberately Claude-Code-only per request: a
+single honest "non-Claude → advisory" line, NO per-tool agy/Codex table.
+
+6 docs files edited (template-b.md as single source; mandatory-files.md architecture.md gets
+an optional `Model tiers` override field defaulting to `auto`; SKILL.md audit item k;
+README work-loop + Checks-include; prompt.md audit check; prompt-scaffold.md role default
+`model:` + per-dispatch override note). ADR-0002 prepended to decisions.md. Zero code changes
+— detect-env.py / tests untouched (9 unittests still green).
+
+Two-phase loop: coder on opus (user-directed), tester waived (pure-docs, no automated tests
+to run), verifier (opus, read-only) → verdict pass. The `Model tiers` field is an OPTIONAL
+override (cost cap / pin / account limit only); default auto means full self-judging.
+
 ## 2026-06-11 — README sync + detect-env hardening (plan: readme-sync-and-detect-env-hardening)
 
 Outcome: closed the drift + hardening gaps found in the 2026-06-11 review. README

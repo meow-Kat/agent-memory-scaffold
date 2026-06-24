@@ -1,5 +1,17 @@
 # Tasks
 
+Plan: docs/plans/dynamic-model-tiering-by-difficulty.md (approved 2026-06-24) — coder on opus, no tester
+
+- [x] template-b.md: add "Model tiering (difficulty-driven dispatch — Claude Code)" subsection (rubric + opus/sonnet/haiku mapping, coder/tester/verifier-fixed-opus + escalation bump + dispatch `model` mechanism + one-line non-Claude advisory fallback)
+- [x] mandatory-files.md: architecture.md template Environment section — add `Model tiers` optional override field (default auto)
+- [x] SKILL.md: audit item k (model tiering present & operable) + scaffold-branch note that Model tiers is optional override
+- [x] README.md: work-loop line on dynamic model tiering + "Checks include" item
+- [x] prompt.md: add model-tiering audit check item (TARGET/CHECK), aligned with template-b
+- [x] prompt-scaffold.md: role default `model:` (coder=opus/tester=sonnet/verifier=opus fallback) + per-dispatch override note
+- [x] Close out: grep consistency sweep across 6 files + `python3 -m unittest discover tests` regression (unchanged) + ADR-0002 (progress.md by orchestrator)
+
+---
+
 Plan: docs/plans/readme-sync-and-detect-env-hardening.md (approved 2026-06-11)
 
 - [x] Commit docs/ workflow memory (stale "not committed" note dropped first)
