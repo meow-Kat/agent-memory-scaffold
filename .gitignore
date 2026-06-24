@@ -1,3 +1,6 @@
 .DS_Store
 .ruff_cache/
 __pycache__/
+
+# Project working memory — kept local, not published to the remote
+docs/
