@@ -8,6 +8,11 @@ AI coding agents forget everything between sessions. Without a structured place 
 
 `agent-memory-scaffold` fixes that in one pass. On entering a project it figures out whether the structure is missing or already there, then either **scaffolds** the missing pieces from templates or runs a **read-only audit** of what exists. It never overwrites your files, never starts dev work on its own, and works on any agent that supports the Agent Skills standard.
 
+Two work-loop capabilities it wires into every scaffold stand out:
+
+- **Difficulty-driven model tiering** — the orchestrator self-judges each task's difficulty and picks the model per-dispatch (on Claude Code: coder heavy → opus / standard → sonnet / light → haiku; tester one tier below; verifier fixed opus). No asking, with an optional per-project cap.
+- **Wave-based parallel execution** — independent tasks (disjoint files, no shared deps) run as concurrent coder/tester lanes, capped at 4 per wave; one integration test then a single verifier wraps up the wave. It degrades losslessly to sequential where parallel dispatch isn't available.
+
 ## Install
 
 ```bash
@@ -114,6 +119,7 @@ agent-memory-scaffold/
 ├── prompt.md                   # workshop prompt: audit your GLOBAL agent setup (standalone, not loaded by the skill)
 ├── prompt-scaffold.md          # workshop prompt: create the three global role agents (standalone, not loaded by the skill)
 ├── tests/                      # unittest fixtures for detect-env.py (stdlib only)
+├── CHANGELOG.md                # dated change log (newest first)
 ├── README.md
 └── LICENSE
 ```
