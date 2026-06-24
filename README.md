@@ -41,6 +41,7 @@ The skill decides which mode to run during its Detect step — you don't pick.
 - Are the roles operable, not just present? (the tester is dispatched to actually run the project's documented test/lint command — presence of the agent ≠ ability to do its job)
 - Does the hot tier match the working tree? (tasks.md / progress.md cross-checked against `git status` / `git diff`; drift makes sub-agents redo or conflict with in-flight work)
 - Is model tiering present and operable? (the work loop defines self-judged difficulty + coder/tester → opus/sonnet/haiku + verifier fixed opus, with the Claude Code dispatch `model` override; non-Claude tools are marked unsupported, not Missing)
+- Is parallel/wave execution safe? (the work loop defines wave grouping with independence gating — no two parallel lanes share files — an integration test before the verifier, and a single verifier per wave capped at 4 lanes; tools without parallel dispatch are marked unsupported, degrading to sequential, not Missing)
 
 In both modes it **stops** afterward and waits for you — it never rolls on into a dev task.
 
@@ -87,6 +88,8 @@ The template wires up a two-phase loop so planning and execution stay separated:
 4. **On failure** — back to the coder with the error. Retry caps: coder ↔ tester max 3 rounds (same failure twice → stop early); verifier runs once; 5 edits on one file → escalate.
 
 On Claude Code the orchestrator self-judges each task's difficulty and dynamically picks the model per-dispatch — coder heavy → opus, standard → sonnet, light → haiku; tester one tier below (matching coder on heavy/security-sensitive work); the verifier is fixed on opus. No asking — grading and model choice are self-judged, with an optional `architecture.md` `Model tiers` cap. On non-Claude tools this degrades to the tool's default / advisory.
+
+For throughput, the orchestrator may also group independent tasks into **waves** and run them in parallel: tasks in one wave must have disjoint file sets and no inter-task dependency (no two coders write the same file), capped at 4 lanes/wave. Each lane is still its own coder → tester loop; once all lanes are green, one **integration test** runs over the merged tree, then a single **verifier wraps up the whole wave** (reporting each task separately), and the wave is committed once. Overlapping or dependent tasks stay sequential, and the wave grouping itself is tool-neutral — parallelism is an optimization that degrades losslessly to sequential lanes on tools without parallel sub-agent dispatch.
 
 ## Deterministic guards
 

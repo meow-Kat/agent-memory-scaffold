@@ -1,5 +1,28 @@
 # Progress
 
+## 2026-06-24 — Wave-based parallel execution (plan: parallel-wave-execution)
+
+Outcome: the scaffolded work loop (and the global harness Phase 2) now support task-level
+parallelism. The orchestrator groups tasks.md into waves where intra-wave tasks have disjoint
+file sets + no inter-task dependency (invariant: no two coders in a wave write the same file;
+uncertain → sequential). Within a wave it dispatches the lanes' coders concurrently, then
+testers concurrently (Claude Code multi-dispatch), capped at 4 lanes/wave. After all lanes are
+green → one integration test over the merged tree → stable → a single verifier closes out the
+whole wave (one verdict, per-task report). Retry caps are per-lane; a blocked lane yields a
+partial report with no auto-rollback; commit is per-wave. Parallelism is an optimization —
+sequential is the lossless fallback (same grouping → integration → single-verifier structure),
+so tools without parallel sub-agent dispatch degrade gracefully, not break.
+
+5 repo docs files edited (template-b.md single source; SKILL.md audit item l; README work-loop
+paragraph + Checks-include; prompt.md audit check 13) + ADR-0003. Global synced afterward:
+~/.claude/CLAUDE.md Phase 2 "Per task" → "Per wave" + Retry caps reframed per-lane (NOT version-
+controlled — local config). Zero code changes — detect-env.py / tests untouched (9 unittests
+green); diff was additive only (sequential loop preserved as the documented fallback).
+
+Two-phase loop: coder on opus (user-directed), tester waived (pure-docs), verifier (opus,
+read-only) → verdict pass. Decisions: cap=4 lanes/wave (Q1), prompt.md wave audit item included
+(Q2). prompt-scaffold.md untouched — parallelism is an orchestration layer, not an agent change.
+
 ## 2026-06-24 — Difficulty-driven model tiering for coder/tester (plan: dynamic-model-tiering-by-difficulty)
 
 Outcome: the scaffolded work loop now bakes in dynamic model selection — the orchestrator

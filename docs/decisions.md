@@ -17,6 +17,49 @@
 ## Entries
 <!-- newest first -->
 
+## ADR-0003: Wave-based parallel execution for independent tasks
+**Date**: 2026-06-24
+**Status**: accepted
+
+### Context
+Independent tasks needn't run strictly sequentially. We want more throughput
+without losing the coder/tester/verifier role split or the correctness the
+sequential loop guarantees. Concurrency is a Claude Code capability; the
+grouping structure itself should stay tool-neutral.
+
+### Decision
+The orchestrator MAY group tasks.md tasks into **waves**: tasks in one wave must
+have disjoint file sets and no inter-task dependency (core invariant — no two
+coders in a wave write the same file), derived from the plan's "影響的檔案 /
+模組". Cap **4 lanes/wave**; more tasks → multiple sequential waves. Within a
+wave, each task's coder/tester runs as a parallel lane (Claude Code: multiple
+Agent/Task dispatches in one turn) with the normal model tiering and **per-lane**
+retry caps. After all lanes are green, ONE integration test runs the full
+test/lint/build over the merged tree; once stable, a single **verifier per wave**
+reviews all task diffs vs plan(s) and returns one verdict that calls out each
+task separately. Commit once **per wave** after the verifier passes (not
+per-lane). Parallel is an optimization with a **lossless sequential fallback**:
+tools without parallel sub-agent dispatch run the wave's lanes sequentially —
+same grouping, integration test, and single verifier — just slower.
+
+### Consequences
+Pure-docs change (no detect-env / test code touched). Independence gating is
+prose discipline — there is no automated dependency-detection tool; uncertain
+independence → err sequential. A blocked lane → orchestrator reports partial
+completion + the blocked lane, with other green lanes' work preserved (no
+auto-rollback). The wave structure is tool-neutral; only the concurrent dispatch
+is Claude-Code-supported. `references/template-b.md` Work loop + Model tiering
+sections are the single source; SKILL audit item l, README, and the global
+workshop prompt follow it.
+
+### Alternatives considered
+- Role-level concurrency within one task (parallelize a single task's
+  coder/tester) — rejected: out of scope this round; wave-level task parallelism
+  is the simpler, safer win.
+- Skip the integration test and go straight to the verifier — rejected: the
+  verifier is read-only and can't iterate cross-task fixes, so cross-task
+  interaction must converge in a tester (integration) pass first.
+
 ## ADR-0002: Difficulty-driven model tiering for coder/tester (Claude Code), verifier fixed opus
 **Date**: 2026-06-24
 **Status**: accepted

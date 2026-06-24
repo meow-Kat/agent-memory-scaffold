@@ -1,5 +1,17 @@
 # Tasks
 
+Plan: docs/plans/parallel-wave-execution.md (approved 2026-06-24) — coder on opus, no tester; Q1 cap=4, Q2 include prompt.md
+
+- [x] template-b.md: extend "## Work loop (two-phase)" with wave-based parallel execution (wave grouping by disjoint files/no-deps, parallel coder→tester lanes, integration test, single verifier per wave, sequential fallback for overlap/deps, cap 4 lanes/wave, per-lane retry caps, per-wave commit) + Model tiering one-liner (lanes self-judge as usual)
+- [x] SKILL.md: audit item l (parallel/wave execution safe — independence gating, integration test before verifier, single verifier per wave; non-parallel tool → unsupported-by-tool, degrade sequential)
+- [x] README.md: work-loop wave paragraph + "Checks include" item l
+- [x] prompt.md: wave-execution audit item (TARGET/CHECK), aligned with template-b
+- [x] docs/decisions.md: ADR-0003 (wave-based parallel orchestration)
+- [x] global: ~/.claude/CLAUDE.md Phase 2 item 4 "Per task" → "Per wave" parallel orchestration + Retry caps per-lane note (done AFTER repo, by orchestrator)
+- [x] Close out: grep consistency sweep + `python3 -m unittest discover tests` regression (unchanged) + progress.md (orchestrator)
+
+---
+
 Plan: docs/plans/dynamic-model-tiering-by-difficulty.md (approved 2026-06-24) — coder on opus, no tester
 
 - [x] template-b.md: add "Model tiering (difficulty-driven dispatch — Claude Code)" subsection (rubric + opus/sonnet/haiku mapping, coder/tester/verifier-fixed-opus + escalation bump + dispatch `model` mechanism + one-line non-Claude advisory fallback)
