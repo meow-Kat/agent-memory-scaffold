@@ -4,6 +4,24 @@ Notable changes to `agent-memory-scaffold`. The skill is not formally versioned 
 entries are dated (newest first). Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/).
 
+## 2026-07-06
+
+### Added
+- **`.claude/rules/` mechanism** documented in the Autoload narrative (template-b): rule files
+  without frontmatter load every session; `paths:`-frontmatter rules load conditionally when a
+  matching file is touched — recommended at PROJECT level only (user-level path-scoped rules
+  reported silently ignored, GH #21858, unverified). `@` imports stay the shown default;
+  rules complement, not replace, them. (ADR-0004)
+- **Optional session-start hot-tier injection**: on Claude Code a `SessionStart` hook can
+  deterministically inject tasks.md/progress.md/plans status instead of the manual-read prose
+  rule. Audited as new item **m** — an upgrade, not a baseline (absent → suggested, NOT Missing;
+  non-Claude tools → unsupported-by-tool).
+
+### Changed
+- Audit item **d**: split targets for an over-long rules file now include project-level
+  `.claude/rules/`; official ~200-line guidance noted as the outer bound (the skill's
+  ~80–120-line target stays stricter).
+
 ## 2026-06-24
 
 ### Added

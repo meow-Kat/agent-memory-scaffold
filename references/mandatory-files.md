@@ -73,6 +73,8 @@ Create the main rules file during scaffold — `CLAUDE.md` for Claude Code, `AGE
 @docs/conventions.md
 <!-- optional: @docs/glossary.md if jargon exists -->
 
+Claude Code alternative: project-level `.claude/rules/` with `paths:` frontmatter can replace or complement the `@` lines above for path-scoped, conditional loading — see `references/template-b.md` Autoload for the mechanics.
+
 ## Refer to
 - Work loop, roles, memory tiers, guards: see global CLAUDE.md / AGENTS.md.
 - **Before any task, READ docs/ memory** — stable tier (architecture / conventions / flow / glossary) + hot tier (tasks.md / progress.md on session start) + check plans/ for in-flight work. docs/ is the only shared handoff channel; sub-agents fly blind without it.

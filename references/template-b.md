@@ -32,7 +32,7 @@ Paste this into the project's CLAUDE.md / AGENTS.md when using **Portable mode**
 
 ## Memory tiers (docs/; English filenames; content English by default, working language only for plans/*; repo docs/ never scratch)
 - Stable (read-only bg, rarely written): architecture.md / conventions.md / flow.md / glossary.md — read before any task; update only on structural/flow change, new term, or new recurring rule. conventions.md = forward-binding rules / gotchas promoted from decisions.md or user feedback (one-offs stay in decisions.md).
-- Hot (per task): tasks.md (plan) / progress.md (after completion). On session start, READ both manually before acting — they don't autoload.
+- Hot (per task): tasks.md (plan) / progress.md (after completion). On session start, READ both manually before acting — they don't autoload. Optional upgrade on Claude Code: a `SessionStart` hook can inject tasks.md/progress.md/plans status into context deterministically; other tools have no equivalent, so the manual read stays advisory there.
 - History: decisions.md (ADR — file always present as a stub; entries appended on demand). Proposal: plans/<name>.md (draft→approved/rejected) — read on session start to check in-flight status before starting new work.
 - Sub-agents are stateless; docs/ is the only shared handoff channel — anything downstream needs must be written there.
 
@@ -41,6 +41,7 @@ Paste this into the project's CLAUDE.md / AGENTS.md when using **Portable mode**
 @docs/architecture.md
 @docs/conventions.md
 - docs/ does NOT autoload by default. Autoload only lean summaries + short files (it pays tokens every session); never autoload architecture detail, decisions, or tasks/progress.
+- Claude Code alternative/complement: `.claude/rules/` — a markdown rule file with NO frontmatter loads every session, same as CLAUDE.md content; a rule file WITH a `paths:` frontmatter glob list loads only when Claude reads a matching file (conditional, no token cost until triggered). Use PROJECT-level `.claude/rules/` for `paths:` rules — user-level (`~/.claude/rules/`) path-scoped rules have been reported silently ignored (GH issue #21858, unverified). `@` imports above stay the default for lean summaries; rules complement, not replace, them. Codex / Antigravity have no equivalent → unsupported-by-tool.
 
 ## Deterministic guards (enforce via your tool's mechanism — hook / sandbox / tool-allowlist — NOT prose)
 - coder must not commit: a PreToolUse(Bash) hook blocks `git commit` / `git push` (the orchestrator commits after green).
