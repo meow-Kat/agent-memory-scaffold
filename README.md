@@ -10,7 +10,7 @@ AI coding agents forget everything between sessions. Without a structured place 
 
 Two work-loop capabilities it wires into every scaffold stand out:
 
-- **Difficulty-driven model & effort tiering** — the orchestrator self-judges each task's difficulty and picks the model per-dispatch (on Claude Code: coder heavy → opus / standard & light → sonnet, haiku out of the rubric; tester one tier below, floored at sonnet; verifier fixed opus + `effort: medium`). Effort is the primary cost/latency knob on Opus 5, model switching is secondary. No asking, with an optional per-project cap.
+- **Difficulty-driven model & effort tiering** — the orchestrator self-judges each task's difficulty and picks the model per-dispatch (on Claude Code: coder heavy → opus / standard & light → sonnet, haiku out of the rubric; tester one tier below, floored at sonnet; verifier fixed opus + `effort: medium`). Effort is the primary cost/latency knob, model switching is secondary. No asking, with an optional per-project cap.
 - **Wave-based parallel execution** — independent tasks (disjoint files, no shared deps) run as concurrent coder/tester lanes, capped at 4 per wave; one integration test then a single verifier wraps up the wave. Degrades losslessly to sequential where parallel dispatch isn't available.
 
 ## Install

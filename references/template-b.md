@@ -18,9 +18,9 @@ Paste this into the project's CLAUDE.md / AGENTS.md when using **Portable mode**
    - **Parallel failure handling**: a lane's tester failure → that lane loops back to its OWN coder (retry caps counted **per-lane**: coder↔tester max 3 rounds, same failure twice → stop that lane). Integration-test failure → identify the offending lane(s), loop back to that coder (counts toward its lane cap). A blocked lane → orchestrator reports partial completion + the blocked lane; other green lanes' work is preserved (no auto-rollback).
 
 ## Model tiering (difficulty-driven dispatch — Claude Code)
-- Opus 5 era: `effort` (`low|medium|high|xhigh|max`) is the PRIMARY token-cost/latency control; the Agent/Task dispatch call has a `model` param but NO `effort` param, so effort stays frontmatter-static per sub-agent and per-task dynamics stay on `model` (secondary).
+- `effort` (`low|medium|high|xhigh|max`) is the PRIMARY token-cost/latency control; the Agent/Task dispatch call has a `model` param but NO `effort` param, so effort stays frontmatter-static per sub-agent and per-task dynamics stay on `model` (secondary).
 - Orchestrator self-grades each task's difficulty at dispatch time (no asking the user; grading AND model choice are self-judged), then picks the coder/tester model per-dispatch. Signals: change size/scope, new module vs localized edit, algorithmic/concurrency/security sensitivity, ambiguity, blast radius, whether a prior attempt failed.
-- Rubric → model: heavy (new module, algorithm/concurrency/security-sensitive, high blast radius, or prior attempt failed) → opus; everything else → sonnet. haiku is out (Haiku 4.5 lacks `effort` support).
+- Rubric → model: heavy (new module, algorithm/concurrency/security-sensitive, high blast radius, or prior attempt failed) → opus; everything else → sonnet. haiku is out (haiku lacks `effort` support).
 - Per role:
   - tester: one tier below coder, floored at sonnet (opus→sonnet, sonnet→sonnet); for heavy or security-sensitive tasks → match coder.
   - verifier: FIXED opus, not tiered.
