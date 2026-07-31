@@ -12,6 +12,11 @@ entries are dated (newest first). Format loosely follows
   first-line cost lever; per-role baselines — coder unset/inherit, tester `effort: low`, verifier
   `effort: medium` (bump to `high` if it starts missing issues). Dispatch has no `effort` param, so
   effort stays frontmatter-static; per-task dynamic control still runs through `model`. (ADR-0005)
+- **Frontend/UI declaration + gate**: `architecture.md` gains a `Frontend / UI` field (`none`, or
+  launch cmd + URL + mock/clean-DB note) — not detected by `detect-env.py`, folded into the
+  consolidated ask round. When ≠ none, the work loop browser-verifies UI-touching tasks (via a
+  browser-testing sub-agent) after tester green and before the verifier; tools without one →
+  unsupported-by-tool, report states unverified-in-browser. Audited as new item **n**. (ADR-0006)
 
 ### Changed
 - **Rubric Plan A**: haiku leaves the coder/tester model rubric — it doesn't support `effort` — so

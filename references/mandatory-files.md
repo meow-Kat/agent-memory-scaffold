@@ -26,6 +26,9 @@ Record the **exact command the tester can paste and run**, including the contain
 ### Model tiers field — optional override, default auto
 Default `auto` = the orchestrator self-judges opus/sonnet per task difficulty (Claude Code; see `references/template-b.md` Model tiering). Fill this only to cap cost, pin, or honor an account limit (e.g. "heavy also only sonnet", or an effort cap/pin like "coder xhigh" / "verifier high"). It is NOT detected by `detect-env.py` and is NOT asked — leave it `auto` unless the user has a reason to override.
 
+### Frontend / UI field — declares browser-verification eligibility
+`none` = no frontend; screens/UI never enter the loop and are never browser-verified. Otherwise, one line: how to launch the UI for browser testing — start command + URL + a mock/clean-DB note (seeded data, test account, etc.). NOT detected by `detect-env.py` (launch semantics aren't inferable from manifests) — it folds into the same consolidated ask round as the other `asks[]` items, not a separate question.
+
 ### Structure section
 - Plan exists (`docs/plans/*.md` listing affected files / modules) → infer from it.
 - Greenfield (no plan) → write `TBD — filled by Phase 2 (execute) after the first task`.
@@ -44,6 +47,7 @@ Default `auto` = the orchestrator self-judges opus/sonnet per task difficulty (C
 - Run / start command:
 - Build / CI command (or "none"):
 - Model tiers (or "auto"):    # OPTIONAL override; auto = orchestrator self-judges opus/sonnet per difficulty (Claude Code); may also cap/pin effort (e.g. "coder xhigh")
+- Frontend / UI (or "none"):    # launch cmd + URL + mock/clean-DB note for browser verification; NOT detected by detect-env.py — filled in the consolidated ask round
 
 ## Structure
 
