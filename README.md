@@ -10,7 +10,7 @@ AI coding agents forget everything between sessions. Without a structured place 
 
 Two work-loop capabilities it wires into every scaffold stand out:
 
-- **Difficulty-driven model tiering** — the orchestrator self-judges each task's difficulty and picks the model per-dispatch (on Claude Code: coder heavy → opus / standard → sonnet / light → haiku; tester one tier below; verifier fixed opus). No asking, with an optional per-project cap.
+- **Difficulty-driven model & effort tiering** — the orchestrator self-judges each task's difficulty and picks the model per-dispatch (on Claude Code: coder heavy → opus / standard & light → sonnet, haiku out of the rubric; tester one tier below, floored at sonnet; verifier fixed opus + `effort: medium`). Effort is the primary cost/latency knob on Opus 5, model switching is secondary. No asking, with an optional per-project cap.
 - **Wave-based parallel execution** — independent tasks (disjoint files, no shared deps) run as concurrent coder/tester lanes, capped at 4 per wave; one integration test then a single verifier wraps up the wave. Degrades losslessly to sequential where parallel dispatch isn't available.
 
 ## Install
@@ -27,7 +27,7 @@ The skill picks the mode during Detect — you don't.
 
 **Scaffold** (missing) — creates only the missing items from templates, reports which fields you must fill, and flags which mechanisms (autoload / hooks) depend on your tool. Existing files are never touched. All six mandatory files (`architecture.md`, `conventions.md`, `decisions.md`, `flow.md`, `glossary.md`, and the project rules file) are always created — skipping at scaffold is path-dependent and the file then stays missing forever. The rules file is wired to read `docs/` so the memory actually gets consulted.
 
-**Audit** (structure exists) — a read-only review that changes nothing. It grades each item **Has / Partial / Missing** per layer, gives a one-line fix, and surfaces the **top-3 highest-ROI gaps**. Checks cover: the six mandatory files present and populated; the hot tier (tasks/progress) maintained and matching the working tree; commit / source-write guards enforced by a real mechanism (not prose) and not over-blocking; the rules file lean (~80–120 lines, split targets on Claude Code include project-level `.claude/rules/`) with no redundant overrides; sub-agents actually using `docs/`; `detect-env.py` reachable; work-loop steering surviving compaction; roles operable (the tester really runs the documented test command); **model tiering** and **parallel/wave execution** present and operable; and (optional) a **session-start hot-tier injection** hook. Mechanisms a tool can't support are marked unsupported, not Missing.
+**Audit** (structure exists) — a read-only review that changes nothing. It grades each item **Has / Partial / Missing** per layer, gives a one-line fix, and surfaces the **top-3 highest-ROI gaps**. Checks cover: the six mandatory files present and populated; the hot tier (tasks/progress) maintained and matching the working tree; commit / source-write guards enforced by a real mechanism (not prose) and not over-blocking; the rules file lean (~80–120 lines, split targets on Claude Code include project-level `.claude/rules/`) with no redundant overrides; sub-agents actually using `docs/`; `detect-env.py` reachable; work-loop steering surviving compaction; roles operable (the tester really runs the documented test command); **model & effort tiering** and **parallel/wave execution** present and operable; and (optional) a **session-start hot-tier injection** hook. Mechanisms a tool can't support are marked unsupported, not Missing.
 
 Both modes **stop** afterward — they never roll on into a dev task.
 
@@ -64,7 +64,7 @@ A two-phase loop keeps planning and execution separate:
 3. **Execute** — split into `docs/tasks.md`, then coder → tester → verifier → all green → commit → update progress.
 4. **On failure** — back to the coder. Retry caps: coder ↔ tester max 3 rounds (same failure twice → stop early); verifier runs once; 5 edits on one file → escalate.
 
-On Claude Code the orchestrator self-judges difficulty and picks the model per-dispatch (model tiering, above), and may group independent tasks into **waves** run in parallel — concurrent coder/tester lanes (cap 4), then one integration test, then a single verifier per wave. Overlapping/dependent tasks stay sequential; parallelism degrades losslessly to sequential where unsupported.
+On Claude Code the orchestrator self-judges difficulty and picks the model per-dispatch, while effort is a per-role frontmatter baseline rather than a dispatch param (model & effort tiering, above), and may group independent tasks into **waves** run in parallel — concurrent coder/tester lanes (cap 4), then one integration test, then a single verifier per wave. Overlapping/dependent tasks stay sequential; parallelism degrades losslessly to sequential where unsupported.
 
 ## Deterministic guards
 

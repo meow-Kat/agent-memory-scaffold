@@ -24,7 +24,7 @@ Use the `asks[]` array from the JSON verbatim as the consolidated question set. 
 Record the **exact command the tester can paste and run**, including the container wrapper if the host runtime can't run it natively (e.g. `docker run --rm … vendor/bin/phpunit`). A bare framework name ("phpunit", "pytest") is insufficient — the tester will improvise and drift, and a containerized run may trip an over-broad write-guard. If host ≠ runtime, capture the wrapper here so the loop stays runnable.
 
 ### Model tiers field — optional override, default auto
-Default `auto` = the orchestrator self-judges opus/sonnet/haiku per task difficulty (Claude Code; see `references/template-b.md` Model tiering). Fill this only to cap cost, pin, or honor an account limit (e.g. "heavy also only sonnet"). It is NOT detected by `detect-env.py` and is NOT asked — leave it `auto` unless the user has a reason to override.
+Default `auto` = the orchestrator self-judges opus/sonnet per task difficulty (Claude Code; see `references/template-b.md` Model tiering). Fill this only to cap cost, pin, or honor an account limit (e.g. "heavy also only sonnet", or an effort cap/pin like "coder xhigh" / "verifier high"). It is NOT detected by `detect-env.py` and is NOT asked — leave it `auto` unless the user has a reason to override.
 
 ### Structure section
 - Plan exists (`docs/plans/*.md` listing affected files / modules) → infer from it.
@@ -43,7 +43,7 @@ Default `auto` = the orchestrator self-judges opus/sonnet/haiku per task difficu
 - Lint / Format (or "none"):
 - Run / start command:
 - Build / CI command (or "none"):
-- Model tiers (or "auto"):    # OPTIONAL override; auto = orchestrator self-judges opus/sonnet/haiku per difficulty (Claude Code)
+- Model tiers (or "auto"):    # OPTIONAL override; auto = orchestrator self-judges opus/sonnet per difficulty (Claude Code); may also cap/pin effort (e.g. "coder xhigh")
 
 ## Structure
 

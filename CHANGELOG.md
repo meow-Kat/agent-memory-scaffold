@@ -4,6 +4,29 @@ Notable changes to `agent-memory-scaffold`. The skill is not formally versioned 
 entries are dated (newest first). Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/).
 
+## 2026-07-31
+
+### Added
+- **Effort as the primary cost/latency control on Opus 5** (template-b Model tiering): frontmatter
+  `effort` (`low|medium|high|xhigh|max`, model-dependent) now sits ahead of model switching as the
+  first-line cost lever; per-role baselines — coder unset/inherit, tester `effort: low`, verifier
+  `effort: medium` (bump to `high` if it starts missing issues). Dispatch has no `effort` param, so
+  effort stays frontmatter-static; per-task dynamic control still runs through `model`. (ADR-0005)
+
+### Changed
+- **Rubric Plan A**: haiku leaves the coder/tester model rubric — it doesn't support `effort` — so
+  light tier now maps to sonnet alongside standard (`light/standard → sonnet`, `heavy → opus`);
+  tester's one-tier-below floors at sonnet (opus→sonnet, sonnet→sonnet). Verifier stays fixed opus,
+  now with `effort: medium`.
+- `prompt-scaffold.md` verifier description: no longer unconditionally "re-runs checks" — reads the
+  tester's/integration report first, re-running checks only if that report is missing or the diff
+  changed after it (drops the redundant re-run the official Opus 5 guide calls out as
+  over-verification).
+- SKILL.md audit item k: extended with effort checks (baselines present on supported roles, absent
+  on haiku/effort-unsupported paths; non-Claude tools → unsupported-by-tool, not Missing).
+- README.md, prompt.md, `references/mandatory-files.md`: rubric/tiering mentions synced to Plan A +
+  effort.
+
 ## 2026-07-06
 
 ### Added

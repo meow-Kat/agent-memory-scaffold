@@ -18,23 +18,26 @@ Paste this into the project's CLAUDE.md / AGENTS.md when using **Portable mode**
    - **Parallel failure handling**: a lane's tester failure → that lane loops back to its OWN coder (retry caps counted **per-lane**: coder↔tester max 3 rounds, same failure twice → stop that lane). Integration-test failure → identify the offending lane(s), loop back to that coder (counts toward its lane cap). A blocked lane → orchestrator reports partial completion + the blocked lane; other green lanes' work is preserved (no auto-rollback).
 
 ## Model tiering (difficulty-driven dispatch — Claude Code)
+- Opus 5 era: `effort` (`low|medium|high|xhigh|max`, availability depends on the model) is the PRIMARY token-cost/latency control; model switching is secondary. The Agent/Task dispatch call has a `model` param but NO `effort` param — effort stays frontmatter-static per sub-agent; per-task dynamic control still runs through `model`.
 - Orchestrator self-grades each task's difficulty at dispatch time (no asking the user; grading AND model choice are self-judged), then picks the coder/tester model per-dispatch. Signals: change size/scope, new module vs localized edit, algorithmic/concurrency/security sensitivity, ambiguity, blast radius, whether a prior attempt failed.
-- Rubric → model: light (localized edit, low blast radius, unambiguous) → haiku; standard (typical feature, contained scope) → sonnet; heavy (new module, algorithm/concurrency/security-sensitive, high blast radius, or prior attempt failed) → opus.
+- Rubric → model: heavy (new module, algorithm/concurrency/security-sensitive, high blast radius, or prior attempt failed) → opus; standard (typical feature, contained scope) AND light (localized edit, low blast radius, unambiguous) → sonnet — haiku is out of this rubric (Haiku 4.5 has no `effort` support, so it can't carry the baselines below).
 - Per role:
-  - coder: heavy → opus, standard → sonnet, light → haiku (model aligns to difficulty).
-  - tester: default one tier below coder (opus→sonnet, sonnet→haiku, haiku→haiku); for heavy or security-sensitive tasks → match coder.
-  - verifier: FIXED opus, not tiered — the read-only final gate always uses the strongest model.
+  - coder: heavy → opus, standard/light → sonnet (model aligns to difficulty).
+  - tester: one tier below coder, floored at sonnet (opus→sonnet, sonnet→sonnet); for heavy or security-sensitive tasks → match coder.
+  - verifier: FIXED opus, not tiered, + frontmatter `effort: medium` (Opus 5 code-review accuracy holds at lower effort settings) — bump back to `high` if it starts missing issues.
+- Per-role effort baselines (frontmatter `effort:`, on models that support it): coder = unset/inherit (session default high; a project may pin `xhigh` via the `architecture.md` `Model tiers` override when uniformly heavy); tester = `effort: low`; verifier = `effort: medium` (see above).
 - Escalation bump (ties to the Work loop retry caps above): on a coder↔tester retry or the same failure twice, bump the model one tier (cap at opus).
-- Switch mechanism (Claude Code): the orchestrator passes the `model` param (opus/sonnet/haiku) when dispatching via the Agent/Task tool; the sub-agent frontmatter `model:` is the default/fallback when no param is passed.
+- Switch mechanism (Claude Code): the orchestrator passes the `model` param (opus/sonnet) when dispatching via the Agent/Task tool; the sub-agent frontmatter `model:` is the default/fallback when no param is passed.
 - Optional override: `architecture.md` Environment `Model tiers` (default `auto` = self-judge) can cap/pin per project (e.g. "heavy also only sonnet"); honor it over the rubric.
 - Parallel lanes (wave execution): each lane's coder/tester self-judges its own model as usual — wave grouping doesn't change per-lane model selection.
-- Non-Claude tools: this subsection does not apply — model selection degrades to the tool's default / advisory.
+- Non-Claude tools: this subsection does not apply — model selection AND effort both degrade to the tool's default / advisory.
 
 ## Memory tiers (docs/; English filenames; content English by default, working language only for plans/*; repo docs/ never scratch)
 - Stable (read-only bg, rarely written): architecture.md / conventions.md / flow.md / glossary.md — read before any task; update only on structural/flow change, new term, or new recurring rule. conventions.md = forward-binding rules / gotchas promoted from decisions.md or user feedback (one-offs stay in decisions.md).
 - Hot (per task): tasks.md (plan) / progress.md (after completion). On session start, READ both manually before acting — they don't autoload. Optional upgrade on Claude Code: a `SessionStart` hook can inject tasks.md/progress.md/plans status into context deterministically; other tools have no equivalent, so the manual read stays advisory there.
 - History: decisions.md (ADR — file always present as a stub; entries appended on demand). Proposal: plans/<name>.md (draft→approved/rejected) — read on session start to check in-flight status before starting new work.
 - Sub-agents are stateless; docs/ is the only shared handoff channel — anything downstream needs must be written there.
+- Written-deliverable length: match the substance the task actually needs — no filler sections, boilerplate, or duplicated summaries (progress.md entries, ADRs, and plan bodies alike).
 
 ## Autoload (needs tool import support — Claude Code `@` imports; Codex / Antigravity have none → inline these summaries here)
 @docs/glossary.md
