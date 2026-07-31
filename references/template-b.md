@@ -18,14 +18,13 @@ Paste this into the project's CLAUDE.md / AGENTS.md when using **Portable mode**
    - **Parallel failure handling**: a lane's tester failure → that lane loops back to its OWN coder (retry caps counted **per-lane**: coder↔tester max 3 rounds, same failure twice → stop that lane). Integration-test failure → identify the offending lane(s), loop back to that coder (counts toward its lane cap). A blocked lane → orchestrator reports partial completion + the blocked lane; other green lanes' work is preserved (no auto-rollback).
 
 ## Model tiering (difficulty-driven dispatch — Claude Code)
-- Opus 5 era: `effort` (`low|medium|high|xhigh|max`, availability depends on the model) is the PRIMARY token-cost/latency control; model switching is secondary. The Agent/Task dispatch call has a `model` param but NO `effort` param — effort stays frontmatter-static per sub-agent; per-task dynamic control still runs through `model`.
+- Opus 5 era: `effort` (`low|medium|high|xhigh|max`) is the PRIMARY token-cost/latency control; the Agent/Task dispatch call has a `model` param but NO `effort` param, so effort stays frontmatter-static per sub-agent and per-task dynamics stay on `model` (secondary).
 - Orchestrator self-grades each task's difficulty at dispatch time (no asking the user; grading AND model choice are self-judged), then picks the coder/tester model per-dispatch. Signals: change size/scope, new module vs localized edit, algorithmic/concurrency/security sensitivity, ambiguity, blast radius, whether a prior attempt failed.
-- Rubric → model: heavy (new module, algorithm/concurrency/security-sensitive, high blast radius, or prior attempt failed) → opus; standard (typical feature, contained scope) AND light (localized edit, low blast radius, unambiguous) → sonnet — haiku is out of this rubric (Haiku 4.5 has no `effort` support, so it can't carry the baselines below).
+- Rubric → model: heavy (new module, algorithm/concurrency/security-sensitive, high blast radius, or prior attempt failed) → opus; everything else → sonnet. haiku is out (Haiku 4.5 lacks `effort` support).
 - Per role:
-  - coder: heavy → opus, standard/light → sonnet (model aligns to difficulty).
   - tester: one tier below coder, floored at sonnet (opus→sonnet, sonnet→sonnet); for heavy or security-sensitive tasks → match coder.
-  - verifier: FIXED opus, not tiered, + frontmatter `effort: medium` (Opus 5 code-review accuracy holds at lower effort settings) — bump back to `high` if it starts missing issues.
-- Per-role effort baselines (frontmatter `effort:`, on models that support it): coder = unset/inherit (session default high; a project may pin `xhigh` via the `architecture.md` `Model tiers` override when uniformly heavy); tester = `effort: low`; verifier = `effort: medium` (see above).
+  - verifier: FIXED opus, not tiered.
+- Per-role effort baselines (frontmatter `effort:`, on models that support it): coder = unset/inherit (session default high; pin `xhigh` via the `architecture.md` `Model tiers` override when uniformly heavy); tester = `effort: low`; verifier = `effort: medium` (review accuracy holds at lower effort) — bump to `high` if it starts missing issues.
 - Escalation bump (ties to the Work loop retry caps above): on a coder↔tester retry or the same failure twice, bump the model one tier (cap at opus).
 - Switch mechanism (Claude Code): the orchestrator passes the `model` param (opus/sonnet) when dispatching via the Agent/Task tool; the sub-agent frontmatter `model:` is the default/fallback when no param is passed.
 - Optional override: `architecture.md` Environment `Model tiers` (default `auto` = self-judge) can cap/pin per project (e.g. "heavy also only sonnet"); honor it over the rubric.

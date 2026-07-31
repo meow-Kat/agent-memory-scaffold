@@ -26,6 +26,10 @@ entries are dated (newest first). Format loosely follows
   on haiku/effort-unsupported paths; non-Claude tools → unsupported-by-tool, not Missing).
 - README.md, prompt.md, `references/mandatory-files.md`: rubric/tiering mentions synced to Plan A +
   effort.
+- Conciseness pass (template-b Model tiering + SKILL.md item k): dropped the dead standard/light
+  distinction (both map to sonnet → "heavy → opus; everything else → sonnet"), the duplicate coder
+  per-role line, the twice-stated verifier `effort: medium`, and explanatory asides — template-b is
+  embedded per-project and read every session, so its wording is a recurring token cost.
 
 ## 2026-07-06
 
