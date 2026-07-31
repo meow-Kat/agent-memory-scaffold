@@ -17,6 +17,10 @@ entries are dated (newest first). Format loosely follows
   consolidated ask round. When ≠ none, the work loop browser-verifies UI-touching tasks (via a
   browser-testing sub-agent) after tester green and before the verifier; tools without one →
   unsupported-by-tool, report states unverified-in-browser. Audited as new item **n**. (ADR-0006)
+- **`examples/`**: dated snapshots of the four working role-agent definitions (coder, tester,
+  verifier, browser-tester — Claude Code format, effort baselines included) plus the two
+  PreToolUse guard scripts their frontmatter references. Reference output of `prompt-scaffold.md`;
+  never loaded by the skill.
 
 ### Changed
 - **Rubric Plan A**: haiku leaves the coder/tester model rubric — it doesn't support `effort` — so

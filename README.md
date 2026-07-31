@@ -81,13 +81,14 @@ agent-memory-scaffold/
 │   └── template-b.md           # work-loop snippet to embed in Portable mode
 ├── prompt.md                   # workshop prompt: audit your GLOBAL setup (standalone)
 ├── prompt-scaffold.md          # workshop prompt: create the three role agents (standalone)
+├── examples/                   # snapshot role agents (Claude Code format) + their guard hooks
 ├── tests/                      # unittest fixtures for detect-env.py (stdlib only)
 ├── CHANGELOG.md                # dated change log (newest first)
 ├── README.md
 └── LICENSE
 ```
 
-The agent loads `SKILL.md` on invocation and reads `references/*` on demand, keeping the always-loaded surface small. The two `prompt*.md` files are standalone — you paste them into a tool yourself; the skill never loads them.
+The agent loads `SKILL.md` on invocation and reads `references/*` on demand, keeping the always-loaded surface small. The two `prompt*.md` files are standalone — you paste them into a tool yourself; the skill never loads them. `examples/` holds dated snapshots of working role-agent definitions (coder / tester / verifier / a browser-testing agent) with their PreToolUse guard scripts — reference output of `prompt-scaffold.md`, never loaded by the skill.
 
 ## Conventions
 
